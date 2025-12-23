@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FarmKeep Pro</title>
+    <script src="https://unpkg.com/dexie/dist/dexie.js"></script>
+    <style>
+        :root { --primary: #ef6c00; --accent: #2e7d32; --bg: #f4f7f6; --card-bg: #ffffff; --text: #212121; --danger: #d32f2f; --edit: #1976d2; }
+        body { font-family: -apple-system, system-ui, sans-serif; margin: 0; background: var(--bg); color: var(--text); }
+        header { background: var(--primary); color: white; padding: 1rem; text-align: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .container { padding: 15px; max-width: 600px; margin: auto; padding-bottom: 60px; }
+        
+        /* Grid UI */
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px; }
+        .cat-card { background: var(--card-bg); padding: 20px; border-radius: 15px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); cursor: pointer; border: 1px solid #ddd; position: relative; }
+        .cat-card span { font-size: 2.2rem; display: block; margin-bottom: 5px; }
+        .cat-card label { font-weight: bold; color: var(--primary); font-size: 0.9rem; }
+        .count-badge { position: absolute; top: 8px; right: 8px; background: var(--text); color: white; border-radius: 50%; width: 22px; height: 22px; font-size: 0.75rem; line-height: 22px; font-weight: bold; }
+
+        /* List UI */
+        .animal-card { background: var(--card-bg); padding: 12px; margin-bottom: 10px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; border-left: 6px solid var(--primary); box-shadow: 0 2px 4px rgba(0,0,0,0.05); cursor: pointer; }
+        .animal-card img { width: 50px; height: 50px; border-radius: 6px; object-fit: cover; margin-right: 12px; background: #eee; }
+        
+        /* Form UI */
+        input, select, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #bbb; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
+        label { font-weight: bold; font-size: 0.85rem; color: #555; display: block; margin-top: 10px; }
+        .photo-preview { width: 100%; height: 180px; background: #eee; border-radius: 10px; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 2px dashed #ccc; margin-bottom: 10px; cursor: pointer; }
+        .photo-preview img { width: 100%; height: 100%; object-fit: cover; }
+
+        /* Buttons */
+        .btn { background: var(--primary); color: white; border: none; padding: 14px; border-radius: 8px; cursor: pointer; width: 100%; font-size: 1rem; font-weight: bold; margin-top: 10px; display: block; text-align: center; }
+        .btn-back { background: #555; width: auto; padding: 8px 15px; margin-bottom: 15px; display: inline-block; font-size: 0.9rem; }
+        .btn-danger { background: var(--danger); }
+        .btn-edit { background: var(--edit); }
+        .btn-outline { background: transparent; color: var(--primary); border: 2px solid var(--primary); }
+        .hidden { display: none; }
+        .vax-section { background: #fff3e0; padding: 12px; border-radius: 8px; margin-top: 10px; border: 1px solid #ffe0b2; }
+    </style>
+</head>
+<body>
+
+<header><h1>FarmKeep Pro</h1></header>
+
+<div class="container">
+    
+    <div id="view-categories">
+        <h3>Livestock & Records</h3>
+        <div class="grid">
+            <div class="cat-card" onclick="showList('Cow')"><div class="count-badge" id="count-Cow">0</div><span>🐄</span><label>Cows</label></div>
+            <div class="cat-card" onclick="showList('Bull')"><div class="count-badge" id="count-Bull">0</div><span>🐂</span><label>Bulls</label></div>
+            <div class="cat-card" onclick="showList('Buffalo')"><div class="count-badge" id="count-Buffalo">0</div><span>🐃</span><label>Buffalo</label></div>
+            <div class="cat-card" onclick="showList('Calf')"><div class="count-badge" id="count-Calf">0</div><span>👶</span><label>Calves</label></div>
+            <div class="cat-card" onclick="showList('Other')"><div class="count-badge" id="count-Other">0</div><span>🚜</span><label>Other</label></div>
+            <div class="cat-card" onclick="showList('Doctor')"><div class="count-badge" id="count-Doctor">0</div><span>👨‍⚕️</span><label>Dr. Visits</label></div>
+        </div>
+
+        <div style="margin-top:30px; border-top: 1px solid #ccc; padding-top: 20px;">
+            <button class="btn btn-outline" onclick="exportData()">📥 Download Data Backup</button>
+            <input type="file" id="importFile" class="hidden" accept=".json" onchange="importData(event)">
+            <button class="btn btn-outline" onclick="document.getElementById('importFile').click()">📤 Restore Data Backup</button>
+        </div>
+    </div>
+
+    <div id="view-list" class="hidden">
+        <button class="btn btn-back" onclick="goToHome()">← Home</button>
+        <h2 id="list-title">Records</h2>
+        <input type="text" id="searchInput" placeholder="🔍 Search name or tag..." oninput="renderList()">
+        <div id="items-container"></div>
+        <button class="btn" style="background:var(--accent)" onclick="openForm()">+ Add New Entry</button>
+    </div>
+
+    <div id="view-form" class="hidden">
+        <button class="btn btn-back" onclick="showView('view-list')">← Cancel</button>
+        <h2 id="form-header">Add Entry</h2>
+        <form id="mainForm">
+            <input type="hidden" id="edit-id">
+            <input type="hidden" id="photo-data">
+
+            <div id="photo-area">
+                <label>Photo</label>
+                <div class="photo-preview" onclick="document.getElementById('fileInput').click()">
+                    <span id="photo-prompt">📷 Click to add photo</span>
+                    <img id="preview-img" class="hidden">
+                </div>
+                <input type="file" id="fileInput" class="hidden" accept="image/*" onchange="processPhoto(event)">
+            </div>
+
+            <div id="animal-fields">
+                <label>Animal Name</label><input type="text" id="name">
+                <label>Tag / ID</label><input type="text" id="tag">
+                <label>Breed</label><input type="text" id="breed">
+                <label>Sex</label>
+                <select id="sex"><option value="Female">Female</option><option value="Male">Male</option><option value="N/A">N/A</option></select>
+                <div class="vax-section">
+                    <label style="margin-top:0">Vaccination Name</label><input type="text" id="vax_name">
+                    <label>Vaccination Date</label><input type="date" id="vax_date">
+                </div>
+            </div>
+
+            <div id="doctor-fields" class="hidden">
+                <label>Doctor Name</label><input type="text" id="doc_name">
+                <label>Visit Purpose</label><input type="text" id="visit_purpose">
+                <label>Visit Date</label><input type="date" id="visit_date">
+            </div>
+
+            <label>Notes</label><textarea id="notes" rows="3"></textarea>
+            <button type="submit" class="btn">💾 Save Record</button>
+        </form>
+    </div>
+
+    <div id="view-details" class="hidden">
+        <button class="btn btn-back" onclick="showView('view-list')">← Back</button>
+        <div id="detail-card" style="background:white; padding:20px; border-radius:12px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);"></div>
+        <button class="btn btn-edit" id="edit-btn">✏️ Edit This Record</button>
+        <button class="btn btn-danger" id="delete-btn">🗑️ Delete Permanently</button>
+    </div>
+</div>
+
+<script>
+    const db = new Dexie("FarmKeepFinalDB");
+    db.version(1).stores({ records: '++id, category, name, tag, doc_name' });
+
+    let currentCat = "";
+
+    async function updateCounters() {
+        const cats = ['Cow', 'Bull', 'Buffalo', 'Calf', 'Other', 'Doctor'];
+        for(let c of cats) {
+            const n = await db.records.where('category').equals(c).count();
+            document.getElementById('count-'+c).innerText = n;
+        }
+    }
+
+    function showView(id) {
+        document.querySelectorAll('.container > div').forEach(d => d.classList.add('hidden'));
+        document.getElementById(id).classList.remove('hidden');
+        if(id === 'view-categories') updateCounters();
+    }
+
+    function goToHome() { showView('view-categories'); }
+
+    async function showList(cat) {
+        currentCat = cat;
+        document.getElementById('list-title').innerText = cat + " Records";
+        renderList();
+        showView('view-list');
+    }
+
+    async function renderList() {
+        const q = document.getElementById('searchInput').value.toLowerCase();
+        let data = await db.records.where('category').equals(currentCat).toArray();
+        if(q) data = data.filter(i => (i.name||"").toLowerCase().includes(q) || (i.tag||"").toLowerCase().includes(q) || (i.doc_name||"").toLowerCase().includes(q));
+        
+        const container = document.getElementById('items-container');
+        container.innerHTML = data.length ? '' : '<p style="text-align:center; padding:20px;">No records found.</p>';
+        data.forEach(i => {
+            const div = document.createElement('div');
+            div.className = 'animal-card';
+            div.onclick = () => showDetails(i.id);
+            const img = i.photo ? `<img src="${i.photo}">` : `<div style="width:50px;height:50px;background:#eee;border-radius:6px;margin-right:12px;display:flex;align-items:center;justify-content:center;">${currentCat==='Doctor'?'👨‍⚕️':'🐄'}</div>`;
+            div.innerHTML = `<div style="display:flex;align-items:center;">${img}<div><b>${i.category==='Doctor'?i.doc_name:i.name}</b><br><small>${i.category==='Doctor'?i.visit_date:i.tag}</small></div></div><span>❯</span>`;
+            container.appendChild(div);
+        });
+    }
+
+    async function showDetails(id) {
+        const i = await db.records.get(id);
+        const card = document.getElementById('detail-card');
+        const img = i.photo ? `<img src="${i.photo}" style="width:100%; border-radius:8px; margin-bottom:15px;">` : '';
+        if(i.category === 'Doctor') {
+            card.innerHTML = `${img}<h2>Dr. ${i.doc_name}</h2><p><b>Date:</b> ${i.visit_date}</p><p><b>Purpose:</b> ${i.visit_purpose}</p><p><b>Notes:</b> ${i.notes || '-'}</p>`;
+        } else {
+            card.innerHTML = `${img}<h2>${i.name}</h2><p><b>Tag:</b> ${i.tag} | <b>Breed:</b> ${i.breed}</p><div class="vax-section"><b>💉 Vaccination:</b> ${i.vax_name || 'None'} (${i.vax_date || 'N/A'})</div><p><b>Notes:</b> ${i.notes || '-'}</p>`;
+        }
+        document.getElementById('edit-btn').onclick = () => openForm(i);
+        document.getElementById('delete-btn').onclick = async () => { if(confirm("Delete?")) { await db.records.delete(id); showList(currentCat); }};
+        showView('view-details');
+    }
+
+    function openForm(item = null) {
+        const f = document.getElementById('mainForm');
+        f.reset();
+        document.getElementById('edit-id').value = item ? item.id : "";
+        document.getElementById('photo-data').value = item ? (item.photo || "") : "";
+        document.getElementById('preview-img').className = (item && item.photo) ? "" : "hidden";
+        if(item && item.photo) document.getElementById('preview-img').src = item.photo;
+        document.getElementById('photo-prompt').className = (item && item.photo) ? "hidden" : "";
+        
+        const isDoc = (item ? item.category : currentCat) === 'Doctor';
+        document.getElementById('animal-fields').classList.toggle('hidden', isDoc);
+        document.getElementById('photo-area').classList.toggle('hidden', isDoc);
+        document.getElementById('doctor-fields').classList.toggle('hidden', !isDoc);
+
+        if(item) {
+            if(isDoc) {
+                document.getElementById('doc_name').value = item.doc_name;
+                document.getElementById('visit_purpose').value = item.visit_purpose;
+                document.getElementById('visit_date').value = item.visit_date;
+            } else {
+                document.getElementById('name').value = item.name;
+                document.getElementById('tag').value = item.tag;
+                document.getElementById('breed').value = item.breed;
+                document.getElementById('sex').value = item.sex;
+                document.getElementById('vax_name').value = item.vax_name;
+                document.getElementById('vax_date').value = item.vax_date;
+            }
+            document.getElementById('notes').value = item.notes;
+        }
+        showView('view-form');
+    }
+
+    function processPhoto(e) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const max = 600;
+                const scale = max / Math.max(img.width, img.height);
+                canvas.width = img.width * scale;
+                canvas.height = img.height * scale;
+                canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+                const base64 = canvas.toDataURL('image/jpeg', 0.7);
+                document.getElementById('photo-data').value = base64;
+                document.getElementById('preview-img').src = base64;
+                document.getElementById('preview-img').classList.remove('hidden');
+                document.getElementById('photo-prompt').classList.add('hidden');
+            };
+            img.src = event.target.result;
+        };
+        reader.readAsDataURL(e.target.files[0]);
+    }
+
+    document.getElementById('mainForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const id = document.getElementById('edit-id').value;
+        const data = {
+            category: currentCat,
+            photo: document.getElementById('photo-data').value,
+            name: document.getElementById('name').value,
+            tag: document.getElementById('tag').value,
+            breed: document.getElementById('breed').value,
+            sex: document.getElementById('sex').value,
+            vax_name: document.getElementById('vax_name').value,
+            vax_date: document.getElementById('vax_date').value,
+            doc_name: document.getElementById('doc_name').value,
+            visit_purpose: document.getElementById('visit_purpose').value,
+            visit_date: document.getElementById('visit_date').value,
+            notes: document.getElementById('notes').value
+        };
+        if(id) await db.records.update(Number(id), data);
+        else await db.records.add(data);
+        showList(currentCat);
+    };
+
+    async function exportData() {
+        const d = await db.records.toArray();
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(new Blob([JSON.stringify(d)], {type:'application/json'}));
+        a.download = 'FarmKeep_Backup.json'; a.click();
+    }
+
+    function importData(e) {
+        const r = new FileReader();
+        r.onload = async (ev) => {
+            await db.records.bulkAdd(JSON.parse(ev.target.result));
+            location.reload();
+        };
+        r.readAsText(e.target.files[0]);
+    }
+
+    updateCounters();
+</script>
+</body>
+</html>

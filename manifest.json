@@ -1,0 +1,15 @@
+{
+  "name": "FarmKeep Pro",
+  "short_name": "FarmKeep",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#f4f7f6",
+  "theme_color": "#ef6c00",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/2395/2395796.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
