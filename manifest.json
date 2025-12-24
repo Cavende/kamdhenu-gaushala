@@ -1,16 +1,11 @@
 {
-  "name": "FarmKeep Pro",
-  "short_name": "FarmKeep",
-  "start_url": "/Rec-book/",
+  "background_color": "#ffffff",
+  "dir": "ltr",
   "display": "standalone",
-  "background_color": "#f4f7f6",
-  "theme_color": "#ef6c00",
-  "icons": [
-    {
-      "src": "https://cdn-icons-png.flaticon.com/512/2396/2396628.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any"
-    }
-  ]
+  "name": "cavende.github",
+  "orientation": "any",
+  "scope": "/",
+  "short_name": "cavende.github",
+  "start_url": "https://cavende.github.io/Rec-book/",
+  "theme_color": "#ffffff"
 }
