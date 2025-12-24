@@ -1,11 +1,23 @@
 {
   "background_color": "#ffffff",
-  "dir": "ltr",
-  "display": "standalone",
-  "name": "cavende.github",
+  "dir": "auto",
+  "display": "fullscreen",
+  "name": "ram",
   "orientation": "any",
   "scope": "/",
-  "short_name": "cavende.github",
+  "short_name": "ram",
   "start_url": "https://cavende.github.io/Rec-book/",
-  "theme_color": "#ffffff"
+  "theme_color": "#ffffff",
+  "id": "Ram",
+  "description": "butiful",
+  "display_override": [
+    "fullscreen",
+    "window-controls-overlay"
+  ],
+  "categories": [
+    "finance",
+    "personalization",
+    "productivity",
+    "utilities"
+  ]
 }
