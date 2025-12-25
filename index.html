@@ -18,8 +18,8 @@
         }
         .header-logo { height: 50px; width: 50px; border-radius: 50%; border: 2px solid white; background: white; object-fit: cover; }
         .header-text { text-align: center; flex-grow: 1; margin-right: 50px; }
-        header h1 { margin: 0; font-size: 1.2rem; line-height: 1.1; }
-        header .subtitle { font-size: 0.7rem; opacity: 0.9; display: block; margin-top: 2px; }
+        header h1 { margin: 0; font-size: 1.2rem; }
+        header .subtitle { font-size: 0.7rem; opacity: 0.9; display: block; }
 
         .container { padding: 15px; max-width: 600px; margin: auto; padding-bottom: 60px; }
         
@@ -40,14 +40,18 @@
         .btn-outline { background: transparent; color: var(--primary); border: 2px solid var(--primary); }
         .hidden { display: none; }
         
-        .animal-card { background: var(--card-bg); padding: 12px; margin-bottom: 10px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; border-left: 6px solid var(--primary); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .animal-card { background: var(--card-bg); padding: 12px; margin-bottom: 10px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; border-left: 6px solid var(--primary); }
         .animal-card img { width: 50px; height: 50px; border-radius: 6px; object-fit: cover; margin-right: 12px; }
+        
+        table { width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; margin-top: 10px; }
+        th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: left; }
+        th { background: var(--primary); color: white; }
     </style>
 </head>
 <body>
 
 <header>
-    <img src="https://i.postimg.cc/jSt9gWck/1000054629.png" class="header-logo" alt="Logo">
+    <img src="https://i.postimg.cc/jSt9gWck/1000054629.png" class="header-logo">
     <div class="header-text">
         <h1>Kamdhenu Gaushala</h1>
         <span class="subtitle">(Shriram Shaktipith Sansthan)</span>
@@ -56,10 +60,11 @@
 
 <div class="container">
     <div id="view-categories">
-        <h3>Cloud Inventory</h3>
+        <h3>Cloud Records</h3>
         <div class="grid" id="category-grid"></div>
         <div style="margin-top:25px;">
-            <button class="btn btn-outline" onclick="exportData()">📥 Backup All Cloud Data</button>
+            <button class="btn" style="background:var(--accent)" onclick="showSummary()">📊 View Inventory Report</button>
+            <button class="btn btn-outline" onclick="exportData()">📥 Backup All Data</button>
         </div>
     </div>
 
@@ -72,23 +77,48 @@
 
     <div id="view-form" class="hidden">
         <button class="btn" style="width:auto; background:#555;" onclick="showView('view-list')">← Cancel</button>
+        <h2 id="form-header">Add Entry</h2>
         <form id="mainForm">
             <input type="hidden" id="photo-data">
-            <div class="photo-preview" onclick="document.getElementById('fileInput').click()">
-                <span id="photo-prompt">📷 Click to Add Photo</span>
-                <img id="preview-img" class="hidden">
+            
+            <div id="photo-section">
+                <div class="photo-preview" onclick="document.getElementById('fileInput').click()">
+                    <span id="photo-prompt">📷 Add Photo</span>
+                    <img id="preview-img" class="hidden">
+                </div>
+                <input type="file" id="fileInput" class="hidden" accept="image/*" onchange="processPhoto(event)">
             </div>
-            <input type="file" id="fileInput" class="hidden" accept="image/*" onchange="processPhoto(event)">
-            <input type="text" id="name" placeholder="Animal Name" required>
-            <input type="text" id="tag" placeholder="Ear Tag / ID">
-            <textarea id="notes" placeholder="Additional Notes..." rows="3"></textarea>
+
+            <div id="animal-fields">
+                <input type="text" id="name" placeholder="Animal Name">
+                <input type="text" id="tag" placeholder="Tag / ID">
+                <input type="text" id="breed" placeholder="Breed">
+            </div>
+
+            <div id="doctor-fields" class="hidden">
+                <input type="text" id="doc_name" placeholder="Doctor Name">
+                <input type="text" id="visit_purpose" placeholder="Purpose of Visit">
+                <input type="date" id="visit_date">
+            </div>
+
+            <textarea id="notes" placeholder="Notes..." rows="3"></textarea>
             <button type="submit" class="btn">💾 Save to Cloud</button>
         </form>
+    </div>
+
+    <div id="view-summary" class="hidden">
+        <button class="btn" style="width:auto; background:#555;" onclick="showView('view-categories')">← Home</button>
+        <h2>Inventory Report</h2>
+        <table>
+            <thead><tr><th>Category</th><th>Count</th></tr></thead>
+            <tbody id="summary-body"></tbody>
+            <tfoot><tr style="font-weight:bold; background:#f9f9f9;"><td>Total</td><td id="total-count">0</td></tr></tfoot>
+        </table>
+        <button class="btn btn-outline" onclick="window.print()">🖨️ Print Report</button>
     </div>
 </div>
 
 <script>
-    // Firebase Configuration using your keys
     const firebaseConfig = {
         apiKey: "AIzaSyDKWiiRjST-dL6tQM6GE8QrnDb-_pKPdRw",
         authDomain: "gaushala-app-d9444.firebaseapp.com",
@@ -104,7 +134,6 @@
     let currentCat = "";
     let allRecords = {};
 
-    // Listen for Real-time Cloud Updates
     recordsRef.on('value', (snapshot) => {
         allRecords = snapshot.val() || {};
         updateDashboard();
@@ -120,14 +149,9 @@
         const cats = ['Cow', 'Bull', 'Buffalo', 'Calf', 'Other', 'Doctor'];
         const grid = document.getElementById('category-grid');
         grid.innerHTML = '';
-        
         cats.forEach(c => {
             const count = Object.values(allRecords).filter(r => r.category === c).length;
-            grid.innerHTML += `
-                <div class="cat-card" onclick="showList('${c}')">
-                    <div class="count-badge">${count}</div>
-                    <span>${getEmoji(c)}</span><label>${c}s</label>
-                </div>`;
+            grid.innerHTML += `<div class="cat-card" onclick="showList('${c}')"><div class="count-badge">${count}</div><span>${getEmoji(c)}</span><label>${c}</label></div>`;
         });
     }
 
@@ -147,25 +171,28 @@
         const container = document.getElementById('items-container');
         container.innerHTML = '';
         const filtered = Object.entries(allRecords).filter(([id, r]) => r.category === currentCat);
-        
-        if(filtered.length === 0) container.innerHTML = '<p style="text-align:center;padding:20px;">No records found.</p>';
-
         filtered.forEach(([id, r]) => {
             const div = document.createElement('div');
             div.className = 'animal-card';
-            const img = r.photo ? `<img src="${r.photo}">` : '<div style="width:50px;height:50px;background:#eee;border-radius:6px;display:flex;align-items:center;justify-content:center;margin-right:12px;">🐄</div>';
-            div.innerHTML = `
-                <div style="display:flex;align-items:center;">${img}
-                <div><b>${r.name}</b><br><small>Tag: ${r.tag || 'N/A'}</small></div></div>
-                <button onclick="deleteRecord('${id}')" style="background:none; border:none; color:var(--danger); font-size:1.2rem; cursor:pointer;">🗑️</button>`;
+            const img = r.photo ? `<img src="${r.photo}">` : '<span>🐾</span>';
+            const title = r.category === 'Doctor' ? r.doc_name : r.name;
+            const subtitle = r.category === 'Doctor' ? r.visit_date : r.tag;
+            div.innerHTML = `<div style="display:flex;align-items:center;padding:10px;">${img}<div><b>${title}</b><br><small>${subtitle}</small></div></div><button onclick="deleteRecord('${id}')" style="background:none;border:none;color:red;padding:10px;">🗑️</button>`;
             container.appendChild(div);
         });
     }
 
-    async function deleteRecord(id) {
-        if(confirm("Permanently delete this from Cloud?")) {
-            await recordsRef.child(id).remove();
-        }
+    function showSummary() {
+        const cats = ['Cow', 'Bull', 'Buffalo', 'Calf', 'Other'];
+        const body = document.getElementById('summary-body');
+        body.innerHTML = ''; let total = 0;
+        cats.forEach(c => {
+            const count = Object.values(allRecords).filter(r => r.category === c).length;
+            total += count;
+            body.innerHTML += `<tr><td>${c}s</td><td>${count}</td></tr>`;
+        });
+        document.getElementById('total-count').innerText = total;
+        showView('view-summary');
     }
 
     function openForm() {
@@ -173,6 +200,12 @@
         document.getElementById('photo-data').value = "";
         document.getElementById('preview-img').classList.add('hidden');
         document.getElementById('photo-prompt').classList.remove('hidden');
+        
+        const isDoc = currentCat === 'Doctor';
+        document.getElementById('animal-fields').classList.toggle('hidden', isDoc);
+        document.getElementById('photo-section').classList.toggle('hidden', isDoc);
+        document.getElementById('doctor-fields').classList.toggle('hidden', !isDoc);
+        
         showView('view-form');
     }
 
@@ -182,8 +215,7 @@
             const img = new Image();
             img.onload = () => {
                 const canvas = document.createElement('canvas');
-                const max = 400; // Small size for fast cloud sync
-                const scale = max / Math.max(img.width, img.height);
+                const max = 400; const scale = max / Math.max(img.width, img.height);
                 canvas.width = img.width * scale; canvas.height = img.height * scale;
                 canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
                 const b64 = canvas.toDataURL('image/jpeg', 0.6);
@@ -199,24 +231,35 @@
 
     document.getElementById('mainForm').onsubmit = async (e) => {
         e.preventDefault();
+        const isDoc = currentCat === 'Doctor';
         const data = {
             category: currentCat,
-            name: document.getElementById('name').value,
-            tag: document.getElementById('tag').value,
             notes: document.getElementById('notes').value,
-            photo: document.getElementById('photo-data').value,
-            lastUpdate: new Date().toLocaleString()
+            timestamp: Date.now()
         };
+
+        if(isDoc) {
+            data.doc_name = document.getElementById('doc_name').value;
+            data.visit_purpose = document.getElementById('visit_purpose').value;
+            data.visit_date = document.getElementById('visit_date').value;
+        } else {
+            data.name = document.getElementById('name').value;
+            data.tag = document.getElementById('tag').value;
+            data.breed = document.getElementById('breed').value;
+            data.photo = document.getElementById('photo-data').value;
+        }
+
         await recordsRef.push(data);
         showList(currentCat);
     };
 
+    async function deleteRecord(id) {
+        if(confirm("Delete from Cloud?")) await recordsRef.child(id).remove();
+    }
+
     function exportData() {
         const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(allRecords));
-        const dlAnchor = document.createElement('a');
-        dlAnchor.setAttribute("href", dataStr);
-        dlAnchor.setAttribute("download", "gaushala_cloud_backup.json");
-        dlAnchor.click();
+        const a = document.createElement('a'); a.setAttribute("href", dataStr); a.setAttribute("download", "gaushala_backup.json"); a.click();
     }
 </script>
 </body>
