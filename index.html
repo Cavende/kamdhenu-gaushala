@@ -40,7 +40,7 @@
         .btn-outline { background: transparent; color: var(--primary); border: 2px solid var(--primary); }
         .hidden { display: none; }
         
-        .animal-card { background: var(--card-bg); padding: 12px; margin-bottom: 10px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; border-left: 6px solid var(--primary); }
+        .animal-card { background: var(--card-bg); padding: 12px; margin-bottom: 10px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; border-left: 6px solid var(--primary); cursor: pointer; }
         .animal-card img { width: 50px; height: 50px; border-radius: 6px; object-fit: cover; margin-right: 12px; }
         
         table { width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; margin-top: 10px; }
@@ -80,7 +80,6 @@
         <h2 id="form-header">Add Entry</h2>
         <form id="mainForm">
             <input type="hidden" id="photo-data">
-            
             <div id="photo-section">
                 <div class="photo-preview" onclick="document.getElementById('fileInput').click()">
                     <span id="photo-prompt">📷 Add Photo</span>
@@ -88,22 +87,25 @@
                 </div>
                 <input type="file" id="fileInput" class="hidden" accept="image/*" onchange="processPhoto(event)">
             </div>
-
             <div id="animal-fields">
                 <input type="text" id="name" placeholder="Animal Name">
                 <input type="text" id="tag" placeholder="Tag / ID">
                 <input type="text" id="breed" placeholder="Breed">
             </div>
-
             <div id="doctor-fields" class="hidden">
                 <input type="text" id="doc_name" placeholder="Doctor Name">
                 <input type="text" id="visit_purpose" placeholder="Purpose of Visit">
                 <input type="date" id="visit_date">
             </div>
-
             <textarea id="notes" placeholder="Notes..." rows="3"></textarea>
             <button type="submit" class="btn">💾 Save to Cloud</button>
         </form>
+    </div>
+
+    <div id="view-details" class="hidden">
+        <button class="btn" style="width:auto; background:#555;" onclick="showView('view-list')">← Back</button>
+        <div id="detail-card" style="background:white; padding:20px; border-radius:12px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-top:10px;"></div>
+        <button class="btn" style="background:var(--danger)" id="delete-btn">🗑️ Delete Record</button>
     </div>
 
     <div id="view-summary" class="hidden">
@@ -174,12 +176,27 @@
         filtered.forEach(([id, r]) => {
             const div = document.createElement('div');
             div.className = 'animal-card';
-            const img = r.photo ? `<img src="${r.photo}">` : '<span>🐾</span>';
+            div.onclick = () => showDetails(id);
+            const img = r.photo ? `<img src="${r.photo}">` : '<div style="width:50px;height:50px;background:#eee;border-radius:6px;display:flex;align-items:center;justify-content:center;margin-right:12px;">🐄</div>';
             const title = r.category === 'Doctor' ? r.doc_name : r.name;
             const subtitle = r.category === 'Doctor' ? r.visit_date : r.tag;
-            div.innerHTML = `<div style="display:flex;align-items:center;padding:10px;">${img}<div><b>${title}</b><br><small>${subtitle}</small></div></div><button onclick="deleteRecord('${id}')" style="background:none;border:none;color:red;padding:10px;">🗑️</button>`;
+            div.innerHTML = `<div style="display:flex;align-items:center;padding:10px;">${img}<div><b>${title}</b><br><small>${subtitle}</small></div></div><span>❯</span>`;
             container.appendChild(div);
         });
+    }
+
+    function showDetails(id) {
+        const r = allRecords[id];
+        const card = document.getElementById('detail-card');
+        const img = r.photo ? `<img src="${r.photo}" style="width:100%; border-radius:8px; margin-bottom:15px;">` : '';
+        
+        if(r.category === 'Doctor') {
+            card.innerHTML = `<h2>Dr. ${r.doc_name}</h2><p><b>Date:</b> ${r.visit_date}</p><p><b>Purpose:</b> ${r.visit_purpose}</p><p><b>Notes:</b> ${r.notes || '-'}</p>`;
+        } else {
+            card.innerHTML = `${img}<h2>${r.name}</h2><p><b>Tag:</b> ${r.tag || 'N/A'}</p><p><b>Breed:</b> ${r.breed || 'N/A'}</p><p><b>Notes:</b> ${r.notes || '-'}</p>`;
+        }
+        document.getElementById('delete-btn').onclick = () => deleteRecord(id);
+        showView('view-details');
     }
 
     function showSummary() {
@@ -200,12 +217,10 @@
         document.getElementById('photo-data').value = "";
         document.getElementById('preview-img').classList.add('hidden');
         document.getElementById('photo-prompt').classList.remove('hidden');
-        
         const isDoc = currentCat === 'Doctor';
         document.getElementById('animal-fields').classList.toggle('hidden', isDoc);
         document.getElementById('photo-section').classList.toggle('hidden', isDoc);
         document.getElementById('doctor-fields').classList.toggle('hidden', !isDoc);
-        
         showView('view-form');
     }
 
@@ -232,12 +247,7 @@
     document.getElementById('mainForm').onsubmit = async (e) => {
         e.preventDefault();
         const isDoc = currentCat === 'Doctor';
-        const data = {
-            category: currentCat,
-            notes: document.getElementById('notes').value,
-            timestamp: Date.now()
-        };
-
+        const data = { category: currentCat, notes: document.getElementById('notes').value, timestamp: Date.now() };
         if(isDoc) {
             data.doc_name = document.getElementById('doc_name').value;
             data.visit_purpose = document.getElementById('visit_purpose').value;
@@ -248,13 +258,15 @@
             data.breed = document.getElementById('breed').value;
             data.photo = document.getElementById('photo-data').value;
         }
-
         await recordsRef.push(data);
         showList(currentCat);
     };
 
     async function deleteRecord(id) {
-        if(confirm("Delete from Cloud?")) await recordsRef.child(id).remove();
+        if(confirm("Delete from Cloud?")) {
+            await recordsRef.child(id).remove();
+            showList(currentCat);
+        }
     }
 
     function exportData() {
