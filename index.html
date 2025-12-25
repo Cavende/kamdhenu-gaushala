@@ -23,28 +23,26 @@
 
         .container { padding: 15px; max-width: 600px; margin: auto; padding-bottom: 60px; }
         
-        .photo-preview { 
-            width: 100%; height: 180px; background: #e9ecef; border-radius: 12px; 
-            display: flex; flex-direction: column; align-items: center; justify-content: center; 
-            overflow: hidden; border: 2px dashed #6c757d; margin: 10px 0 20px 0; cursor: pointer;
-        }
-        .photo-preview img { width: 100%; height: 100%; object-fit: cover; }
-
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px; }
         .cat-card { background: var(--card-bg); padding: 20px; border-radius: 15px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); cursor: pointer; border: 1px solid #ddd; position: relative; }
         .cat-card span { font-size: 2rem; display: block; margin-bottom: 5px; }
         .count-badge { position: absolute; top: 8px; right: 8px; background: var(--text); color: white; border-radius: 50%; width: 22px; height: 22px; font-size: 0.75rem; line-height: 22px; font-weight: bold; }
 
         input, select, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #bbb; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
-        .btn { background: var(--primary); color: white; border: none; padding: 14px; border-radius: 8px; cursor: pointer; width: 100%; font-size: 1rem; font-weight: bold; margin-top: 10px; display: block; text-align: center; text-decoration: none; }
+        .search-box { background: white; border: 2px solid var(--primary); margin-bottom: 15px; }
+        
+        .btn { background: var(--primary); color: white; border: none; padding: 14px; border-radius: 8px; cursor: pointer; width: 100%; font-size: 1rem; font-weight: bold; margin-top: 10px; display: block; text-align: center; }
         .btn-outline { background: transparent; color: var(--primary); border: 2px solid var(--primary); }
         .hidden { display: none; }
         
         .animal-card { background: var(--card-bg); padding: 12px; margin-bottom: 10px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; border-left: 6px solid var(--primary); cursor: pointer; }
         .animal-card img { width: 50px; height: 50px; border-radius: 6px; object-fit: cover; margin-right: 12px; }
         
-        table { width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; margin-top: 10px; }
-        th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: left; }
+        .photo-preview { width: 100%; height: 180px; background: #eee; border-radius: 12px; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 2px dashed #666; margin-bottom: 10px; cursor: pointer;}
+        .photo-preview img { width: 100%; height: 100%; object-fit: cover; }
+
+        table { width: 100%; border-collapse: collapse; background: white; margin-top: 10px; }
+        th, td { padding: 12px; border: 1px solid #eee; text-align: left; }
         th { background: var(--primary); color: white; }
     </style>
 </head>
@@ -61,7 +59,14 @@
 <div class="container">
     <div id="view-categories">
         <h3>Cloud Records</h3>
-        <div class="grid" id="category-grid"></div>
+        <div class="grid">
+            <div class="cat-card" onclick="showList('Cow')"><div class="count-badge" id="badge-Cow">..</div><span>🐮</span><label>Cow</label></div>
+            <div class="cat-card" onclick="showList('Bull')"><div class="count-badge" id="badge-Bull">..</div><span>🐂</span><label>Bull</label></div>
+            <div class="cat-card" onclick="showList('Buffalo')"><div class="count-badge" id="badge-Buffalo">..</div><span>🐃</span><label>Buffalo</label></div>
+            <div class="cat-card" onclick="showList('Calf')"><div class="count-badge" id="badge-Calf">..</div><span>🐄</span><label>Calf</label></div>
+            <div class="cat-card" onclick="showList('Other')"><div class="count-badge" id="badge-Other">..</div><span>🐑</span><label>Other</label></div>
+            <div class="cat-card" onclick="showList('Doctor')"><div class="count-badge" id="badge-Doctor">..</div><span>👨‍⚕️</span><label>Doctor</label></div>
+        </div>
         <div style="margin-top:25px;">
             <button class="btn" style="background:var(--accent)" onclick="showSummary()">📊 View Inventory Report</button>
             <button class="btn btn-outline" onclick="exportData()">📥 Backup All Data</button>
@@ -71,6 +76,7 @@
     <div id="view-list" class="hidden">
         <button class="btn" style="width:auto; background:#555;" onclick="showView('view-categories')">← Home</button>
         <h2 id="list-title">Records</h2>
+        <input type="text" id="searchInput" class="search-box" placeholder="🔍 Search Name or Tag..." oninput="renderList()">
         <div id="items-container"></div>
         <button class="btn" style="background:var(--accent)" onclick="openForm()">+ Add New Entry</button>
     </div>
@@ -79,6 +85,7 @@
         <button class="btn" style="width:auto; background:#555;" onclick="showView('view-list')">← Cancel</button>
         <h2 id="form-header">Add Entry</h2>
         <form id="mainForm">
+            <input type="hidden" id="edit-id">
             <input type="hidden" id="photo-data">
             <div id="photo-section">
                 <div class="photo-preview" onclick="document.getElementById('fileInput').click()">
@@ -94,7 +101,7 @@
             </div>
             <div id="doctor-fields" class="hidden">
                 <input type="text" id="doc_name" placeholder="Doctor Name">
-                <input type="text" id="visit_purpose" placeholder="Purpose of Visit">
+                <input type="text" id="visit_purpose" placeholder="Purpose">
                 <input type="date" id="visit_date">
             </div>
             <textarea id="notes" placeholder="Notes..." rows="3"></textarea>
@@ -104,19 +111,20 @@
 
     <div id="view-details" class="hidden">
         <button class="btn" style="width:auto; background:#555;" onclick="showView('view-list')">← Back</button>
-        <div id="detail-card" style="background:white; padding:20px; border-radius:12px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-top:10px;"></div>
-        <button class="btn" style="background:var(--danger)" id="delete-btn">🗑️ Delete Record</button>
+        <div id="detail-card" style="background:white; padding:20px; border-radius:12px; margin-top:10px;"></div>
+        <div class="grid">
+            <button class="btn" style="background:var(--edit)" id="edit-btn">✏️ Edit</button>
+            <button class="btn" style="background:var(--danger)" id="delete-btn">🗑️ Delete</button>
+        </div>
     </div>
 
     <div id="view-summary" class="hidden">
         <button class="btn" style="width:auto; background:#555;" onclick="showView('view-categories')">← Home</button>
         <h2>Inventory Report</h2>
-        <table>
+        <table id="summary-table">
             <thead><tr><th>Category</th><th>Count</th></tr></thead>
             <tbody id="summary-body"></tbody>
-            <tfoot><tr style="font-weight:bold; background:#f9f9f9;"><td>Total</td><td id="total-count">0</td></tr></tfoot>
         </table>
-        <button class="btn btn-outline" onclick="window.print()">🖨️ Print Report</button>
     </div>
 </div>
 
@@ -138,7 +146,7 @@
 
     recordsRef.on('value', (snapshot) => {
         allRecords = snapshot.val() || {};
-        updateDashboard();
+        updateBadges();
         if(!document.getElementById('view-list').classList.contains('hidden')) renderList();
     });
 
@@ -147,40 +155,41 @@
         document.getElementById(id).classList.remove('hidden');
     }
 
-    function updateDashboard() {
+    function updateBadges() {
         const cats = ['Cow', 'Bull', 'Buffalo', 'Calf', 'Other', 'Doctor'];
-        const grid = document.getElementById('category-grid');
-        grid.innerHTML = '';
         cats.forEach(c => {
             const count = Object.values(allRecords).filter(r => r.category === c).length;
-            grid.innerHTML += `<div class="cat-card" onclick="showList('${c}')"><div class="count-badge">${count}</div><span>${getEmoji(c)}</span><label>${c}</label></div>`;
+            const badge = document.getElementById(`badge-${c}`);
+            if(badge) badge.innerText = count;
         });
-    }
-
-    function getEmoji(c) {
-        const em = { Cow:'🐮', Bull:'🐂', Buffalo:'🐃', Calf:'🐄', Other:'🐑', Doctor:'👨‍⚕️' };
-        return em[c] || '🐾';
     }
 
     function showList(cat) {
         currentCat = cat;
         document.getElementById('list-title').innerText = cat + " Records";
+        document.getElementById('searchInput').value = '';
         renderList();
         showView('view-list');
     }
 
     function renderList() {
+        const query = document.getElementById('searchInput').value.toLowerCase();
         const container = document.getElementById('items-container');
         container.innerHTML = '';
-        const filtered = Object.entries(allRecords).filter(([id, r]) => r.category === currentCat);
+        let filtered = Object.entries(allRecords).filter(([id, r]) => r.category === currentCat);
+        if(query) {
+            filtered = filtered.filter(([id, r]) => {
+                const searchStr = (r.name || r.doc_name || "") + (r.tag || "");
+                return searchStr.toLowerCase().includes(query);
+            });
+        }
         filtered.forEach(([id, r]) => {
             const div = document.createElement('div');
             div.className = 'animal-card';
             div.onclick = () => showDetails(id);
-            const img = r.photo ? `<img src="${r.photo}">` : '<div style="width:50px;height:50px;background:#eee;border-radius:6px;display:flex;align-items:center;justify-content:center;margin-right:12px;">🐄</div>';
+            const img = r.photo ? `<img src="${r.photo}">` : '<span>🐾</span>';
             const title = r.category === 'Doctor' ? r.doc_name : r.name;
-            const subtitle = r.category === 'Doctor' ? r.visit_date : r.tag;
-            div.innerHTML = `<div style="display:flex;align-items:center;padding:10px;">${img}<div><b>${title}</b><br><small>${subtitle}</small></div></div><span>❯</span>`;
+            div.innerHTML = `<div style="display:flex;align-items:center;padding:10px;">${img}<div><b>${title}</b><br><small>${r.tag || r.visit_date || ''}</small></div></div><span>❯</span>`;
             container.appendChild(div);
         });
     }
@@ -188,32 +197,55 @@
     function showDetails(id) {
         const r = allRecords[id];
         const card = document.getElementById('detail-card');
-        const img = r.photo ? `<img src="${r.photo}" style="width:100%; border-radius:8px; margin-bottom:15px;">` : '';
-        
+        const img = r.photo ? `<img src="${r.photo}" style="width:100%; border-radius:8px; margin-bottom:10px;">` : '';
         if(r.category === 'Doctor') {
             card.innerHTML = `<h2>Dr. ${r.doc_name}</h2><p><b>Date:</b> ${r.visit_date}</p><p><b>Purpose:</b> ${r.visit_purpose}</p><p><b>Notes:</b> ${r.notes || '-'}</p>`;
         } else {
             card.innerHTML = `${img}<h2>${r.name}</h2><p><b>Tag:</b> ${r.tag || 'N/A'}</p><p><b>Breed:</b> ${r.breed || 'N/A'}</p><p><b>Notes:</b> ${r.notes || '-'}</p>`;
         }
         document.getElementById('delete-btn').onclick = () => deleteRecord(id);
+        document.getElementById('edit-btn').onclick = () => editRecord(id);
         showView('view-details');
+    }
+
+    function editRecord(id) {
+        const r = allRecords[id];
+        openForm();
+        document.getElementById('form-header').innerText = "Edit Entry";
+        document.getElementById('edit-id').value = id;
+        document.getElementById('notes').value = r.notes || "";
+        if(r.category === 'Doctor') {
+            document.getElementById('doc_name').value = r.doc_name;
+            document.getElementById('visit_purpose').value = r.visit_purpose;
+            document.getElementById('visit_date').value = r.visit_date;
+        } else {
+            document.getElementById('name').value = r.name;
+            document.getElementById('tag').value = r.tag;
+            document.getElementById('breed').value = r.breed;
+            if(r.photo) {
+                document.getElementById('photo-data').value = r.photo;
+                document.getElementById('preview-img').src = r.photo;
+                document.getElementById('preview-img').classList.remove('hidden');
+                document.getElementById('photo-prompt').classList.add('hidden');
+            }
+        }
     }
 
     function showSummary() {
         const cats = ['Cow', 'Bull', 'Buffalo', 'Calf', 'Other'];
         const body = document.getElementById('summary-body');
-        body.innerHTML = ''; let total = 0;
+        body.innerHTML = '';
         cats.forEach(c => {
             const count = Object.values(allRecords).filter(r => r.category === c).length;
-            total += count;
             body.innerHTML += `<tr><td>${c}s</td><td>${count}</td></tr>`;
         });
-        document.getElementById('total-count').innerText = total;
         showView('view-summary');
     }
 
     function openForm() {
         document.getElementById('mainForm').reset();
+        document.getElementById('edit-id').value = "";
+        document.getElementById('form-header').innerText = "Add Entry";
         document.getElementById('photo-data').value = "";
         document.getElementById('preview-img').classList.add('hidden');
         document.getElementById('photo-prompt').classList.remove('hidden');
@@ -233,9 +265,8 @@
                 const max = 400; const scale = max / Math.max(img.width, img.height);
                 canvas.width = img.width * scale; canvas.height = img.height * scale;
                 canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-                const b64 = canvas.toDataURL('image/jpeg', 0.6);
-                document.getElementById('photo-data').value = b64;
-                document.getElementById('preview-img').src = b64;
+                document.getElementById('photo-data').value = canvas.toDataURL('image/jpeg', 0.6);
+                document.getElementById('preview-img').src = document.getElementById('photo-data').value;
                 document.getElementById('preview-img').classList.remove('hidden');
                 document.getElementById('photo-prompt').classList.add('hidden');
             };
@@ -246,9 +277,9 @@
 
     document.getElementById('mainForm').onsubmit = async (e) => {
         e.preventDefault();
-        const isDoc = currentCat === 'Doctor';
-        const data = { category: currentCat, notes: document.getElementById('notes').value, timestamp: Date.now() };
-        if(isDoc) {
+        const id = document.getElementById('edit-id').value;
+        const data = { category: currentCat, notes: document.getElementById('notes').value };
+        if(currentCat === 'Doctor') {
             data.doc_name = document.getElementById('doc_name').value;
             data.visit_purpose = document.getElementById('visit_purpose').value;
             data.visit_date = document.getElementById('visit_date').value;
@@ -258,20 +289,18 @@
             data.breed = document.getElementById('breed').value;
             data.photo = document.getElementById('photo-data').value;
         }
-        await recordsRef.push(data);
+        if(id) await recordsRef.child(id).update(data);
+        else await recordsRef.push(data);
         showList(currentCat);
     };
 
     async function deleteRecord(id) {
-        if(confirm("Delete from Cloud?")) {
-            await recordsRef.child(id).remove();
-            showList(currentCat);
-        }
+        if(confirm("Delete from Cloud?")) { await recordsRef.child(id).remove(); showList(currentCat); }
     }
 
     function exportData() {
         const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(allRecords));
-        const a = document.createElement('a'); a.setAttribute("href", dataStr); a.setAttribute("download", "gaushala_backup.json"); a.click();
+        const a = document.createElement('a'); a.setAttribute("href", dataStr); a.setAttribute("download", "backup.json"); a.click();
     }
 </script>
 </body>
