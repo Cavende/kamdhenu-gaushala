@@ -1,6 +1,6 @@
 {
-  "name": "FramKeep Pro",
-  "short_name": "FramKeep",
+  "name": "Kamdhenu Gaushala",
+  "short_name": "Kamdhenu",
   "start_url": "/Rec-book/index.html",
   "scope": "/Rec-book/",
   "display": "standalone",
@@ -8,7 +8,7 @@
   "theme_color": "#ef6c00",
   "icons": [
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/2396/2396628.png",
+      "src": "https://i.postimg.cc/J7N0Sbns/1000054629.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
