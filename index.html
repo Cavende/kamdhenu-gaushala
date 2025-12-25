@@ -13,7 +13,6 @@
         :root { --primary: #ef6c00; --accent: #2e7d32; --bg: #f4f7f6; --card-bg: #ffffff; --text: #212121; --danger: #d32f2f; --edit: #1976d2; }
         body { font-family: -apple-system, system-ui, sans-serif; margin: 0; background: var(--bg); color: var(--text); }
         
-        /* Updated Header Styling */
         header { 
             background: var(--primary); 
             color: white; 
@@ -29,28 +28,47 @@
 
         .container { padding: 15px; max-width: 600px; margin: auto; padding-bottom: 60px; }
         
-        /* Grid & Cards */
+        /* Photo Box Styling (Fixed) */
+        .photo-preview { 
+            width: 100%; 
+            height: 180px; 
+            background: #eee; 
+            border-radius: 12px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            overflow: hidden; 
+            border: 2px dashed #bbb; 
+            margin-bottom: 15px; 
+            cursor: pointer;
+            position: relative;
+        }
+        .photo-preview img { width: 100%; height: 100%; object-fit: cover; }
+        #photo-prompt { color: #666; font-weight: bold; text-align: center; padding: 10px; }
+
+        /* Dashboard Grid */
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px; }
         .cat-card { background: var(--card-bg); padding: 20px; border-radius: 15px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); cursor: pointer; border: 1px solid #ddd; position: relative; }
         .cat-card span { font-size: 2.2rem; display: block; margin-bottom: 5px; }
         .cat-card label { font-weight: bold; color: var(--primary); font-size: 0.9rem; }
         .count-badge { position: absolute; top: 8px; right: 8px; background: var(--text); color: white; border-radius: 50%; width: 22px; height: 22px; font-size: 0.75rem; line-height: 22px; font-weight: bold; }
 
-        /* Tables */
-        .report-table { width: 100%; border-collapse: collapse; background: white; border-radius: 10px; overflow: hidden; margin-top: 15px; }
-        .report-table th { background: var(--primary); color: white; padding: 12px; text-align: left; }
-        .report-table td { padding: 12px; border-bottom: 1px solid #eee; }
-        .total-row { background: #eee; font-weight: bold; }
-
-        /* Common UI */
-        .animal-card { background: var(--card-bg); padding: 12px; margin-bottom: 10px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; border-left: 6px solid var(--primary); box-shadow: 0 2px 4px rgba(0,0,0,0.05); cursor: pointer; }
-        .animal-card img { width: 50px; height: 50px; border-radius: 6px; object-fit: cover; margin-right: 12px; }
+        /* Forms & Buttons */
         input, select, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #bbb; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
         .btn { background: var(--primary); color: white; border: none; padding: 14px; border-radius: 8px; cursor: pointer; width: 100%; font-size: 1rem; font-weight: bold; margin-top: 10px; display: block; text-align: center; text-decoration: none; }
         .btn-outline { background: transparent; color: var(--primary); border: 2px solid var(--primary); }
         .btn-back { background: #555; width: auto; padding: 8px 15px; display: inline-block; margin-bottom: 15px; }
         .hidden { display: none; }
         .vax-section { background: #fff3e0; padding: 12px; border-radius: 8px; margin-top: 10px; border: 1px solid #ffe0b2; }
+
+        /* Report Table */
+        .report-table { width: 100%; border-collapse: collapse; background: white; border-radius: 10px; overflow: hidden; margin-top: 15px; }
+        .report-table th { background: var(--primary); color: white; padding: 12px; text-align: left; }
+        .report-table td { padding: 12px; border-bottom: 1px solid #eee; }
+        
+        /* List Cards */
+        .animal-card { background: var(--card-bg); padding: 12px; margin-bottom: 10px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; border-left: 6px solid var(--primary); box-shadow: 0 2px 4px rgba(0,0,0,0.05); cursor: pointer; }
+        .animal-card img { width: 50px; height: 50px; border-radius: 6px; object-fit: cover; margin-right: 12px; background: #eee; }
     </style>
 </head>
 <body>
@@ -96,22 +114,24 @@
             <input type="hidden" id="edit-id">
             <input type="hidden" id="photo-data">
 
-            <div id="photo-area">
+            <div id="photo-container">
+                <label>Animal Photo</label>
                 <div class="photo-preview" onclick="document.getElementById('fileInput').click()">
-                    <span id="photo-prompt">📷 Click to add photo</span>
+                    <span id="photo-prompt">📷 Click here to add a photo</span>
                     <img id="preview-img" class="hidden">
                 </div>
                 <input type="file" id="fileInput" class="hidden" accept="image/*" onchange="processPhoto(event)">
             </div>
 
             <div id="animal-fields">
-                <label>Name</label><input type="text" id="name">
-                <label>Tag / ID</label><input type="text" id="tag">
-                <label>Breed</label><input type="text" id="breed">
+                <label>Name</label><input type="text" id="name" placeholder="Animal Name">
+                <label>Tag / ID</label><input type="text" id="tag" placeholder="Ear Tag Number">
+                <label>Breed</label><input type="text" id="breed" placeholder="e.g. Gir, Sahiwal">
                 <label>Sex</label>
                 <select id="sex"><option value="Female">Female</option><option value="Male">Male</option></select>
                 <div class="vax-section">
-                    <label>Vaccination</label><input type="text" id="vax_name" placeholder="Name">
+                    <label>Vaccination Detail</label>
+                    <input type="text" id="vax_name" placeholder="Vaccine Name">
                     <input type="date" id="vax_date">
                 </div>
             </div>
@@ -122,7 +142,7 @@
                 <label>Date</label><input type="date" id="visit_date">
             </div>
 
-            <label>Notes</label><textarea id="notes" rows="3"></textarea>
+            <label>Notes</label><textarea id="notes" rows="3" placeholder="Additional details..."></textarea>
             <button type="submit" class="btn">💾 Save Record</button>
         </form>
     </div>
@@ -133,7 +153,7 @@
         <table class="report-table">
             <thead><tr><th>Category</th><th style="text-align:right;">Count</th></tr></thead>
             <tbody id="summary-body"></tbody>
-            <tfoot><tr class="total-row"><td>Total Livestock</td><td style="text-align:right;" id="total-count">0</td></tr></tfoot>
+            <tfoot><tr style="background:#eee; font-weight:bold;"><td>Total Livestock</td><td style="text-align:right;" id="total-count">0</td></tr></tfoot>
         </table>
         <button class="btn btn-outline" onclick="window.print()">🖨️ Print Report</button>
     </div>
@@ -147,20 +167,15 @@
 </div>
 
 <script>
-    // 1. PWA Service Worker Registration
     if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/Rec-book/sw.js', { scope: '/Rec-book/' });
-        });
+        navigator.serviceWorker.register('/Rec-book/sw.js', { scope: '/Rec-book/' });
     }
 
-    // 2. Database Setup
     const db = new Dexie("FarmKeepFinalDB");
     db.version(1).stores({ records: '++id, category, name, tag, doc_name' });
 
     let currentCat = "";
 
-    // 3. Navigation
     function showView(id) {
         document.querySelectorAll('.container > div').forEach(d => d.classList.add('hidden'));
         document.getElementById(id).classList.remove('hidden');
@@ -169,7 +184,6 @@
 
     function goToHome() { showView('view-categories'); }
 
-    // 4. Counters
     async function updateCounters() {
         const cats = ['Cow', 'Bull', 'Buffalo', 'Calf', 'Other', 'Doctor'];
         for(let c of cats) {
@@ -179,13 +193,11 @@
         }
     }
 
-    // 5. Summary Report Logic
     async function showSummary() {
         const cats = ['Cow', 'Bull', 'Buffalo', 'Calf', 'Other'];
         const body = document.getElementById('summary-body');
         body.innerHTML = '';
         let total = 0;
-
         for (let c of cats) {
             const count = await db.records.where('category').equals(c).count();
             total += count;
@@ -195,7 +207,6 @@
         showView('view-summary');
     }
 
-    // 6. List Rendering
     async function showList(cat) {
         currentCat = cat;
         document.getElementById('list-title').innerText = cat + " Records";
@@ -209,7 +220,7 @@
         if(q) data = data.filter(i => (i.name||"").toLowerCase().includes(q) || (i.tag||"").toLowerCase().includes(q));
         
         const container = document.getElementById('items-container');
-        container.innerHTML = data.length ? '' : '<p style="text-align:center;">No records.</p>';
+        container.innerHTML = data.length ? '' : '<p style="text-align:center; padding:20px;">No records yet.</p>';
         data.forEach(i => {
             const div = document.createElement('div');
             div.className = 'animal-card';
@@ -220,7 +231,6 @@
         });
     }
 
-    // 7. Details & Delete
     async function showDetails(id) {
         const i = await db.records.get(id);
         const card = document.getElementById('detail-card');
@@ -235,7 +245,6 @@
         showView('view-details');
     }
 
-    // 8. Form Handling
     function openForm(item = null) {
         const f = document.getElementById('mainForm');
         f.reset();
@@ -247,7 +256,7 @@
         
         const isDoc = (item ? item.category : currentCat) === 'Doctor';
         document.getElementById('animal-fields').classList.toggle('hidden', isDoc);
-        document.getElementById('photo-area').classList.toggle('hidden', isDoc);
+        document.getElementById('photo-container').classList.toggle('hidden', isDoc);
         document.getElementById('doctor-fields').classList.toggle('hidden', !isDoc);
 
         if(item) {
@@ -306,7 +315,6 @@
         showList(currentCat);
     };
 
-    // 9. Backup & Restore
     async function exportData() {
         const d = await db.records.toArray();
         const a = document.createElement('a');
