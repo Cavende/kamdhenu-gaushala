@@ -345,3 +345,32 @@
                 document.getElementById('preview-img').src = document.getElementById('photo-data').value;
                 document.getElementById('preview-img').classList.remove('hidden');
                 document.getElement
+
+reader.readAsDataURL(e.target.files[0]);
+    }
+
+    document.getElementById('mainForm').onsubmit = async (e) => {
+        e.preventDefault();
+        if(!isAdmin) return alert("Login as Admin");
+        const id = document.getElementById('edit-id').value;
+        const data = { category: currentCat, notes: document.getElementById('notes').value };
+        if(currentCat === 'Doctor') {
+            data.doc_name = document.getElementById('doc_name').value;
+            data.visit_purpose = document.getElementById('visit_purpose').value;
+            data.visit_date = document.getElementById('visit_date').value;
+            data.fee = document.getElementById('fee').value || 0;
+        } else {
+            data.name = document.getElementById('name').value;
+            data.tag = document.getElementById('tag').value;
+            data.breed = document.getElementById('breed').value;
+            data.dob = document.getElementById('dob').value;
+            data.photo = document.getElementById('photo-data').value;
+        }
+        id ? await recordsRef.child(id).update(data) : await recordsRef.push(data);
+        showList(currentCat);
+    };
+
+    async function deleteRecord(id) { if(!isAdmin) return; if(confirm("Delete?")) { await recordsRef.child(id).remove(); showList(currentCat); } }
+</script>
+</body>
+</html>
