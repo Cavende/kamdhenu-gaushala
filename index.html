@@ -12,13 +12,12 @@
         :root { --primary: #ef6c00; --accent: #2e7d32; --bg: #f4f7f6; --card-bg: #ffffff; --text: #212121; --danger: #d32f2f; --edit: #1976d2; }
         body { font-family: -apple-system, system-ui, sans-serif; margin: 0; background: var(--bg); color: var(--text); }
         
-        /* Large Header Logo (100px) & Centered Text */
         header { 
             background: var(--primary); color: white; padding: 1rem; 
             display: flex; align-items: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
         }
         .header-logo { height: 100px; width: 100px; border-radius: 50%; border: 3px solid white; background: white; object-fit: cover; flex-shrink: 0; }
-        .header-text { text-align: center; flex-grow: 1; margin-right: 100px; /* Balances the logo on the left */ }
+        .header-text { text-align: center; flex-grow: 1; margin-right: 100px; }
         header h1 { margin: 0; font-size: 1.4rem; line-height: 1.2; }
         header .subtitle { font-size: 0.8rem; opacity: 0.95; display: block; font-style: italic; margin-top: 4px; }
 
@@ -28,7 +27,8 @@
         .cat-card span { font-size: 2rem; display: block; margin-bottom: 5px; }
         .count-badge { position: absolute; top: 8px; right: 8px; background: var(--text); color: white; border-radius: 50%; width: 22px; height: 22px; font-size: 0.75rem; line-height: 22px; font-weight: bold; }
 
-        input, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #bbb; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
+        label { display: block; margin-top: 10px; font-weight: bold; font-size: 0.9rem; color: #555; }
+        input, textarea { width: 100%; padding: 12px; margin: 5px 0 12px 0; border: 1px solid #bbb; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
         .search-box { background: white; border: 2px solid var(--primary); margin-bottom: 15px; }
         
         .btn { background: var(--primary); color: white; border: none; padding: 14px; border-radius: 8px; cursor: pointer; width: 100%; font-size: 1rem; font-weight: bold; margin-top: 10px; display: block; text-align: center; text-decoration: none; }
@@ -36,7 +36,6 @@
         .hidden { display: none !important; }
         .admin-only { display: none; }
 
-        /* Report Styles */
         .report-box { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
         table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 1.1rem; }
         th { background: #f8f9fa; color: #555; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 1px; padding: 15px; border-bottom: 2px solid #eee; text-align: left; }
@@ -46,18 +45,12 @@
         .animal-card { background: var(--card-bg); padding: 12px; margin-bottom: 10px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; border-left: 6px solid var(--primary); cursor: pointer; }
         .animal-card img { width: 50px; height: 50px; border-radius: 6px; object-fit: cover; margin-right: 12px; }
 
-        /* PRINT STYLES - 110px LOGO & FULL BRAND NAME */
         @media print {
             body { background: white; }
             header, .btn, .search-box, .grid, .cat-card { display: none !important; }
-            .container { max-width: 100%; padding: 0; }
             #print-header { display: flex !important; align-items: center; border-bottom: 4px solid var(--primary); padding-bottom: 20px; margin-bottom: 30px; }
-            #print-header img { height: 110px; width: 110px; margin-right: 25px; border-radius: 50%; border: 2px solid #ddd; background: white; }
+            #print-header img { height: 110px; width: 110px; margin-right: 25px; border-radius: 50%; }
             #print-header h1 { margin: 0; color: var(--primary); font-size: 1.8rem; }
-            #print-header p { margin: 4px 0; font-size: 1.1rem; font-style: italic; color: #444; }
-            table { border: 1px solid #ddd; }
-            th { background: #f0f0f0 !important; border: 1px solid #ddd; }
-            td { border: 1px solid #ddd; }
         }
     </style>
 </head>
@@ -83,7 +76,7 @@
             <div class="cat-card" onclick="showList('Doctor')"><div class="count-badge" id="badge-Doctor">..</div><span>👨‍⚕️</span><label>Doctor</label></div>
         </div>
         <div style="margin-top:25px;">
-            <button class="btn" style="background:var(--accent)" onclick="showSummary()">📊 View Inventory Report</button>
+            <button class="btn" style="background:var(--accent)" onclick="showSummary()">📊 View Inventory & Expenses</button>
             <button class="btn btn-outline" onclick="exportData()">📥 Backup All Data</button>
             <button id="login-trigger" class="btn btn-outline" style="border-color:#555; color:#555; margin-top:20px;" onclick="promptLogin()">🔒 Admin Login</button>
             <button id="logout-trigger" class="btn btn-outline hidden" style="border-color:var(--danger); color:var(--danger); margin-top:20px;" onclick="logout()">🔓 Logout Admin</button>
@@ -95,27 +88,26 @@
         <div class="report-box">
             <div id="print-header" style="display:none;">
                 <img src="https://i.postimg.cc/jSt9gWck/1000054629.png">
-                <div>
-                    <h1>Kamdhenu Gaushala</h1>
-                    <p>Bramhachari Someshwar Chaytanya Kalyankari Sanstha (BSCKS)</p>
-                    <p><i>Official Inventory Report</i></p>
-                </div>
+                <div><h1>Kamdhenu Gaushala</h1><p>Bramhachari Someshwar Chaytanya (BSCKS)</p></div>
             </div>
-            <h2 style="margin-top:0;">Inventory Report</h2>
-            <p id="print-date" style="font-size: 0.9rem; color: #666;"></p>
+            <h2>Detailed Report</h2>
+            <p id="print-date"></p>
             <table>
-                <thead><tr><th>Category</th><th style="text-align:right;">Head Count</th></tr></thead>
+                <thead><tr><th>Category</th><th style="text-align:right;">Details</th></tr></thead>
                 <tbody id="summary-body"></tbody>
-                <tfoot><tr class="total-row"><td>TOTAL ANIMALS</td><td id="total-count" style="text-align:right;">0</td></tr></tfoot>
+                <tfoot>
+                    <tr class="total-row"><td>TOTAL ANIMALS</td><td id="total-count" style="text-align:right;">0</td></tr>
+                    <tr class="total-row" style="background:#e8f5e9;"><td>TOTAL DOCTOR FEES</td><td id="total-fees" style="text-align:right;">₹ 0</td></tr>
+                </tfoot>
             </table>
         </div>
-        <button class="btn" style="background:var(--accent); margin-top: 25px;" onclick="window.print()">🖨️ Print Official Report</button>
+        <button class="btn" style="background:var(--accent); margin-top: 25px;" onclick="window.print()">🖨️ Print Report</button>
     </div>
 
     <div id="view-list" class="hidden">
         <button class="btn" style="width:auto; background:#555;" onclick="showView('view-categories')">← Home</button>
         <h2 id="list-title">Records</h2>
-        <input type="text" id="searchInput" class="search-box" placeholder="🔍 Search Name or Tag..." oninput="renderList()">
+        <input type="text" id="searchInput" class="search-box" placeholder="🔍 Search Name, Tag or Date..." oninput="renderList()">
         <div id="items-container"></div>
         <button class="btn admin-only" style="background:var(--accent)" onclick="openForm()">+ Add New Entry</button>
     </div>
@@ -134,15 +126,20 @@
             </div>
             <div id="animal-fields">
                 <input type="text" id="name" placeholder="Animal Name" required>
-                <input type="text" id="tag" placeholder="Tag / ID">
-                <input type="text" id="breed" placeholder="Breed">
+                <input type="text" id="tag" placeholder="Tag / ID Number">
+                <input type="text" id="breed" placeholder="Breed (e.g. Gir, Sahiwal)">
+                <label>Date of Birth</label>
+                <input type="date" id="dob">
             </div>
             <div id="doctor-fields" class="hidden">
                 <input type="text" id="doc_name" placeholder="Doctor Name">
-                <input type="text" id="visit_purpose" placeholder="Purpose">
+                <input type="text" id="visit_purpose" placeholder="Purpose (Treatment/Checkup)">
+                <label>Visit Date</label>
                 <input type="date" id="visit_date">
+                <label>Visit Fee (₹)</label>
+                <input type="number" id="fee" placeholder="0.00">
             </div>
-            <textarea id="notes" placeholder="Notes..." rows="3"></textarea>
+            <textarea id="notes" placeholder="Any additional notes or history..." rows="3"></textarea>
             <button type="submit" class="btn">💾 Save to Cloud</button>
         </form>
     </div>
@@ -192,6 +189,16 @@
 
     function logout() { localStorage.removeItem('gaushalaAdmin'); location.reload(); }
 
+    function calculateAge(dob) {
+        if(!dob) return "N/A";
+        const birth = new Date(dob);
+        const now = new Date();
+        let years = now.getFullYear() - birth.getFullYear();
+        let months = now.getMonth() - birth.getMonth();
+        if (months < 0) { years--; months += 12; }
+        return `${years}y ${months}m`;
+    }
+
     recordsRef.on('value', (snapshot) => {
         allRecords = snapshot.val() || {};
         ['Cow', 'Bull', 'Buffalo', 'Calf', 'Other', 'Doctor'].forEach(c => {
@@ -210,14 +217,21 @@
     function showSummary() {
         const cats = ['Cow', 'Bull', 'Buffalo', 'Calf', 'Other'];
         const body = document.getElementById('summary-body');
-        document.getElementById('print-date').innerText = "Generated: " + new Date().toLocaleDateString('en-IN', {day:'2-digit', month:'long', year:'numeric', hour:'2-digit', minute:'2-digit'});
-        body.innerHTML = ''; let total = 0;
+        document.getElementById('print-date').innerText = "Date: " + new Date().toLocaleString();
+        body.innerHTML = ''; let totalCount = 0; let totalFees = 0;
+        
         cats.forEach(c => {
             const count = Object.values(allRecords).filter(r => r.category === c).length;
-            total += count;
-            body.innerHTML += `<tr><td>${c}s</td><td style="text-align:right;">${count}</td></tr>`;
+            totalCount += count;
+            body.innerHTML += `<tr><td>${c}s</td><td style="text-align:right;">${count} Heads</td></tr>`;
         });
-        document.getElementById('total-count').innerText = total;
+        
+        Object.values(allRecords).forEach(r => {
+            if(r.category === 'Doctor' && r.fee) totalFees += parseFloat(r.fee);
+        });
+
+        document.getElementById('total-count').innerText = totalCount;
+        document.getElementById('total-fees').innerText = "₹ " + totalFees.toLocaleString('en-IN');
         showView('view-summary');
     }
 
@@ -228,13 +242,15 @@
         const container = document.getElementById('items-container');
         container.innerHTML = '';
         let filtered = Object.entries(allRecords).filter(([id, r]) => r.category === currentCat);
-        if(q) filtered = filtered.filter(([id, r]) => ((r.name||r.doc_name||"")+(r.tag||"")).toLowerCase().includes(q));
+        if(q) filtered = filtered.filter(([id, r]) => JSON.stringify(r).toLowerCase().includes(q));
+        
         filtered.forEach(([id, r]) => {
             const div = document.createElement('div');
             div.className = 'animal-card';
             div.onclick = () => showDetails(id);
             const img = r.photo ? `<img src="${r.photo}">` : '<span>🐾</span>';
-            div.innerHTML = `<div style="display:flex;align-items:center;padding:10px;">${img}<div><b>${r.name||r.doc_name}</b><br><small>${r.tag || r.visit_date || ''}</small></div></div><span>❯</span>`;
+            const sub = r.category === 'Doctor' ? `₹${r.fee || 0} on ${r.visit_date}` : `Tag: ${r.tag || 'No Tag'} | Age: ${calculateAge(r.dob)}`;
+            div.innerHTML = `<div style="display:flex;align-items:center;padding:10px;">${img}<div><b>${r.name||r.doc_name}</b><br><small>${sub}</small></div></div><span>❯</span>`;
             container.appendChild(div);
         });
     }
@@ -243,8 +259,12 @@
         const r = allRecords[id];
         const card = document.getElementById('detail-card');
         const img = r.photo ? `<img src="${r.photo}" style="width:100%; border-radius:8px; margin-bottom:10px;">` : '';
-        if(r.category === 'Doctor') card.innerHTML = `<h2>Dr. ${r.doc_name}</h2><p><b>Date:</b> ${r.visit_date}</p><p><b>Purpose:</b> ${r.visit_purpose}</p><p><b>Notes:</b> ${r.notes || '-'}</p>`;
-        else card.innerHTML = `${img}<h2>${r.name}</h2><p><b>Tag:</b> ${r.tag || 'N/A'}</p><p><b>Breed:</b> ${r.breed || 'N/A'}</p><p><b>Notes:</b> ${r.notes || '-'}</p>`;
+        
+        if(r.category === 'Doctor') {
+            card.innerHTML = `<h2>Dr. ${r.doc_name}</h2><p><b>Date:</b> ${r.visit_date}</p><p><b>Fee Paid:</b> ₹${r.fee || 0}</p><p><b>Purpose:</b> ${r.visit_purpose}</p><p><b>Notes:</b> ${r.notes || '-'}</p>`;
+        } else {
+            card.innerHTML = `${img}<h2>${r.name}</h2><p><b>Tag:</b> ${r.tag || 'N/A'}</p><p><b>Age:</b> ${calculateAge(r.dob)} (${r.dob || 'Unknown'})</p><p><b>Breed:</b> ${r.breed || 'N/A'}</p><p><b>Notes:</b> ${r.notes || '-'}</p>`;
+        }
         document.getElementById('delete-btn').onclick = () => deleteRecord(id);
         document.getElementById('edit-btn').onclick = () => editRecord(id);
         showView('view-details');
@@ -272,10 +292,12 @@
             document.getElementById('doc_name').value = r.doc_name;
             document.getElementById('visit_purpose').value = r.visit_purpose;
             document.getElementById('visit_date').value = r.visit_date;
+            document.getElementById('fee').value = r.fee || "";
         } else {
             document.getElementById('name').value = r.name;
             document.getElementById('tag').value = r.tag;
             document.getElementById('breed').value = r.breed;
+            document.getElementById('dob').value = r.dob || "";
             if(r.photo) {
                 document.getElementById('photo-data').value = r.photo;
                 document.getElementById('preview-img').src = r.photo;
@@ -314,10 +336,12 @@
             data.doc_name = document.getElementById('doc_name').value;
             data.visit_purpose = document.getElementById('visit_purpose').value;
             data.visit_date = document.getElementById('visit_date').value;
+            data.fee = document.getElementById('fee').value;
         } else {
             data.name = document.getElementById('name').value;
             data.tag = document.getElementById('tag').value;
             data.breed = document.getElementById('breed').value;
+            data.dob = document.getElementById('dob').value;
             data.photo = document.getElementById('photo-data').value;
         }
         id ? await recordsRef.child(id).update(data) : await recordsRef.push(data);
