@@ -38,19 +38,22 @@
 
         .report-box { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
         table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 1.1rem; }
-        th { background: #f8f9fa; color: #555; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 1px; padding: 15px; border-bottom: 2px solid #eee; text-align: left; }
+        th { background: #f8f9fa; color: #555; padding: 15px; border-bottom: 2px solid #eee; text-align: left; }
         td { padding: 15px; border-bottom: 1px solid #eee; color: #333; }
         .total-row { background: #fff3e0; font-weight: bold; color: var(--primary); }
 
         .animal-card { background: var(--card-bg); padding: 12px; margin-bottom: 10px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; border-left: 6px solid var(--primary); cursor: pointer; }
         .animal-card img { width: 50px; height: 50px; border-radius: 6px; object-fit: cover; margin-right: 12px; }
 
+        /* PRINT STYLING */
         @media print {
             body { background: white; }
-            header, .btn, .search-box, .grid, .cat-card { display: none !important; }
-            #print-header { display: flex !important; align-items: center; border-bottom: 4px solid var(--primary); padding-bottom: 20px; margin-bottom: 30px; }
-            #print-header img { height: 110px; width: 110px; margin-right: 25px; border-radius: 50%; }
-            #print-header h1 { margin: 0; color: var(--primary); font-size: 1.8rem; }
+            header, .btn, .search-box, .grid, .cat-card, .admin-only { display: none !important; }
+            .container { max-width: 100%; padding: 0; }
+            #print-header-full { display: flex !important; align-items: center; border-bottom: 3px solid var(--primary); padding-bottom: 15px; margin-bottom: 20px; }
+            #print-header-full img { height: 100px; width: 100px; border-radius: 50%; margin-right: 20px; }
+            #detail-card { border: none !important; padding: 0 !important; }
+            .print-only { display: block !important; }
         }
     </style>
 </head>
@@ -76,40 +79,59 @@
             <div class="cat-card" onclick="showList('Doctor')"><div class="count-badge" id="badge-Doctor">..</div><span>👨‍⚕️</span><label>Doctor</label></div>
         </div>
         <div style="margin-top:25px;">
-            <button class="btn" style="background:var(--accent)" onclick="showSummary()">📊 View Inventory & Expenses</button>
-            <button class="btn btn-outline" onclick="exportData()">📥 Backup All Data</button>
-            <button id="login-trigger" class="btn btn-outline" style="border-color:#555; color:#555; margin-top:20px;" onclick="promptLogin()">🔒 Admin Login</button>
-            <button id="logout-trigger" class="btn btn-outline hidden" style="border-color:var(--danger); color:var(--danger); margin-top:20px;" onclick="logout()">🔓 Logout Admin</button>
+            <button class="btn" style="background:var(--accent)" onclick="showSummary()">📊 View Inventory Report</button>
+            <button id="login-trigger" class="btn btn-outline" style="margin-top:20px;" onclick="promptLogin()">🔒 Admin Login</button>
+            <button id="logout-trigger" class="btn btn-outline hidden" style="margin-top:20px; border-color:var(--danger); color:var(--danger);" onclick="logout()">🔓 Logout</button>
         </div>
     </div>
 
     <div id="view-summary" class="hidden">
         <button class="btn" style="width:auto; background:#555; margin-bottom:15px;" onclick="showView('view-categories')">← Home</button>
         <div class="report-box">
-            <div id="print-header" style="display:none;">
+            <div id="print-header-full" style="display:none;">
                 <img src="https://i.postimg.cc/jSt9gWck/1000054629.png">
                 <div><h1>Kamdhenu Gaushala</h1><p>Bramhachari Someshwar Chaytanya (BSCKS)</p></div>
             </div>
-            <h2>Detailed Report</h2>
-            <p id="print-date"></p>
+            <h2>Headcount Report</h2>
             <table>
-                <thead><tr><th>Category</th><th style="text-align:right;">Details</th></tr></thead>
                 <tbody id="summary-body"></tbody>
-                <tfoot>
-                    <tr class="total-row"><td>TOTAL ANIMALS</td><td id="total-count" style="text-align:right;">0</td></tr>
-                    <tr class="total-row" style="background:#e8f5e9;"><td>TOTAL DOCTOR FEES</td><td id="total-fees" style="text-align:right;">₹ 0</td></tr>
-                </tfoot>
+                <tfoot><tr class="total-row"><td>TOTAL ANIMALS</td><td id="total-count" style="text-align:right;">0</td></tr></tfoot>
             </table>
         </div>
-        <button class="btn" style="background:var(--accent); margin-top: 25px;" onclick="window.print()">🖨️ Print Report</button>
+        <button class="btn" style="background:var(--accent); margin-top:25px;" onclick="window.print()">🖨️ Print Report</button>
+    </div>
+
+    <div id="view-fees" class="hidden">
+        <button class="btn" style="width:auto; background:#555; margin-bottom:15px;" onclick="showView('view-list')">← Back</button>
+        <div class="report-box">
+            <h2>💰 Doctor Fee History</h2>
+            <table>
+                <thead><tr><th>Date</th><th>Doctor</th><th style="text-align:right;">Fee</th></tr></thead>
+                <tbody id="fee-body"></tbody>
+                <tfoot><tr class="total-row"><td>GRAND TOTAL</td><td></td><td id="grand-total-fees" style="text-align:right;">₹ 0</td></tr></tfoot>
+            </table>
+        </div>
+        <button class="btn" style="background:var(--accent); margin-top:25px;" onclick="window.print()">🖨️ Print Fee Record</button>
     </div>
 
     <div id="view-list" class="hidden">
         <button class="btn" style="width:auto; background:#555;" onclick="showView('view-categories')">← Home</button>
         <h2 id="list-title">Records</h2>
-        <input type="text" id="searchInput" class="search-box" placeholder="🔍 Search Name, Tag or Date..." oninput="renderList()">
+        <button id="fee-history-btn" class="btn btn-outline hidden" style="margin-bottom:15px; border-color:var(--accent); color:var(--accent);" onclick="showFeeHistory()">💰 View Fee History</button>
+        <input type="text" id="searchInput" class="search-box" placeholder="🔍 Search...">
         <div id="items-container"></div>
         <button class="btn admin-only" style="background:var(--accent)" onclick="openForm()">+ Add New Entry</button>
+    </div>
+
+    <div id="view-details" class="hidden">
+        <button class="btn" style="width:auto; background:#555; margin-bottom:15px;" onclick="showView('view-list')">← Back</button>
+        <div id="detail-card" class="report-box">
+            </div>
+        <button class="btn" style="background:var(--accent); margin-top:15px;" onclick="window.print()">🖨️ Print This Record</button>
+        <div class="grid admin-only">
+            <button class="btn" style="background:var(--edit)" id="edit-btn">✏️ Edit</button>
+            <button class="btn" style="background:var(--danger)" id="delete-btn">🗑️ Delete</button>
+        </div>
     </div>
 
     <div id="view-form" class="hidden">
@@ -118,39 +140,30 @@
         <form id="mainForm">
             <input type="hidden" id="edit-id"><input type="hidden" id="photo-data">
             <div id="photo-section">
-                <div style="width:100%; height:180px; background:#eee; border-radius:12px; display:flex; align-items:center; justify-content:center; overflow:hidden; border:2px dashed #666; margin-bottom:10px; cursor:pointer;" onclick="document.getElementById('fileInput').click()">
+                <div style="width:100%; height:180px; background:#eee; border-radius:12px; display:flex; align-items:center; justify-content:center; overflow:hidden; border:2px dashed #666; cursor:pointer;" onclick="document.getElementById('fileInput').click()">
                     <span id="photo-prompt">📷 Add Photo</span>
                     <img id="preview-img" class="hidden" style="width:100%; height:100%; object-fit:cover;">
                 </div>
                 <input type="file" id="fileInput" class="hidden" accept="image/*" onchange="processPhoto(event)">
             </div>
             <div id="animal-fields">
-                <input type="text" id="name" placeholder="Animal Name" required>
+                <input type="text" id="name" placeholder="Animal Name">
                 <input type="text" id="tag" placeholder="Tag / ID Number">
-                <input type="text" id="breed" placeholder="Breed (e.g. Gir, Sahiwal)">
+                <input type="text" id="breed" placeholder="Breed">
                 <label>Date of Birth</label>
                 <input type="date" id="dob">
             </div>
             <div id="doctor-fields" class="hidden">
                 <input type="text" id="doc_name" placeholder="Doctor Name">
-                <input type="text" id="visit_purpose" placeholder="Purpose (Treatment/Checkup)">
+                <input type="text" id="visit_purpose" placeholder="Purpose">
                 <label>Visit Date</label>
                 <input type="date" id="visit_date">
                 <label>Visit Fee (₹)</label>
-                <input type="number" id="fee" placeholder="0.00">
+                <input type="number" id="fee" placeholder="0">
             </div>
-            <textarea id="notes" placeholder="Any additional notes or history..." rows="3"></textarea>
-            <button type="submit" class="btn">💾 Save to Cloud</button>
+            <textarea id="notes" placeholder="Notes..." rows="3"></textarea>
+            <button type="submit" class="btn" id="save-btn">💾 Save to Cloud</button>
         </form>
-    </div>
-
-    <div id="view-details" class="hidden">
-        <button class="btn" style="width:auto; background:#555;" onclick="showView('view-list')">← Back</button>
-        <div id="detail-card" style="background:white; padding:20px; border-radius:12px; margin-top:10px;"></div>
-        <div class="grid admin-only">
-            <button class="btn" style="background:var(--edit)" id="edit-btn">✏️ Edit</button>
-            <button class="btn" style="background:var(--danger)" id="delete-btn">🗑️ Delete</button>
-        </div>
     </div>
 </div>
 
@@ -177,7 +190,7 @@
     function promptLogin() {
         const pass = prompt("Enter Admin Password:");
         if(pass === ADMIN_PASS) { setAdmin(true); localStorage.setItem('gaushalaAdmin', 'true'); }
-        else if (pass !== null) alert("Wrong Password!");
+        else if (pass !== null) alert("Wrong!");
     }
 
     function setAdmin(status) {
@@ -215,27 +228,34 @@
     }
 
     function showSummary() {
-        const cats = ['Cow', 'Bull', 'Buffalo', 'Calf', 'Other'];
         const body = document.getElementById('summary-body');
-        document.getElementById('print-date').innerText = "Date: " + new Date().toLocaleString();
-        body.innerHTML = ''; let totalCount = 0; let totalFees = 0;
-        
-        cats.forEach(c => {
+        body.innerHTML = ''; let total = 0;
+        ['Cow', 'Bull', 'Buffalo', 'Calf', 'Other'].forEach(c => {
             const count = Object.values(allRecords).filter(r => r.category === c).length;
-            totalCount += count;
-            body.innerHTML += `<tr><td>${c}s</td><td style="text-align:right;">${count} Heads</td></tr>`;
+            total += count;
+            body.innerHTML += `<tr><td>${c}s</td><td style="text-align:right;">${count}</td></tr>`;
         });
-        
-        Object.values(allRecords).forEach(r => {
-            if(r.category === 'Doctor' && r.fee) totalFees += parseFloat(r.fee);
-        });
-
-        document.getElementById('total-count').innerText = totalCount;
-        document.getElementById('total-fees').innerText = "₹ " + totalFees.toLocaleString('en-IN');
+        document.getElementById('total-count').innerText = total;
         showView('view-summary');
     }
 
-    function showList(cat) { currentCat = cat; document.getElementById('list-title').innerText = cat + " Records"; renderList(); showView('view-list'); }
+    function showFeeHistory() {
+        const body = document.getElementById('fee-body');
+        body.innerHTML = ''; let total = 0;
+        Object.values(allRecords).filter(r => r.category === 'Doctor').forEach(r => {
+            const f = parseFloat(r.fee || 0); total += f;
+            body.innerHTML += `<tr><td>${r.visit_date}</td><td><b>${r.doc_name}</b></td><td style="text-align:right;">₹${f}</td></tr>`;
+        });
+        document.getElementById('grand-total-fees').innerText = "₹ " + total.toLocaleString();
+        showView('view-fees');
+    }
+
+    function showList(cat) { 
+        currentCat = cat; 
+        document.getElementById('list-title').innerText = cat + " Records"; 
+        document.getElementById('fee-history-btn').classList.toggle('hidden', cat !== 'Doctor');
+        renderList(); showView('view-list'); 
+    }
 
     function renderList() {
         const q = document.getElementById('searchInput').value.toLowerCase();
@@ -243,14 +263,12 @@
         container.innerHTML = '';
         let filtered = Object.entries(allRecords).filter(([id, r]) => r.category === currentCat);
         if(q) filtered = filtered.filter(([id, r]) => JSON.stringify(r).toLowerCase().includes(q));
-        
         filtered.forEach(([id, r]) => {
             const div = document.createElement('div');
             div.className = 'animal-card';
             div.onclick = () => showDetails(id);
             const img = r.photo ? `<img src="${r.photo}">` : '<span>🐾</span>';
-            const sub = r.category === 'Doctor' ? `₹${r.fee || 0} on ${r.visit_date}` : `Tag: ${r.tag || 'No Tag'} | Age: ${calculateAge(r.dob)}`;
-            div.innerHTML = `<div style="display:flex;align-items:center;padding:10px;">${img}<div><b>${r.name||r.doc_name}</b><br><small>${sub}</small></div></div><span>❯</span>`;
+            div.innerHTML = `<div style="display:flex;align-items:center;">${img}<div><b>${r.name||r.doc_name}</b><br><small>${r.tag||r.visit_date||''}</small></div></div><span>❯</span>`;
             container.appendChild(div);
         });
     }
@@ -258,12 +276,18 @@
     function showDetails(id) {
         const r = allRecords[id];
         const card = document.getElementById('detail-card');
-        const img = r.photo ? `<img src="${r.photo}" style="width:100%; border-radius:8px; margin-bottom:10px;">` : '';
+        const headerHtml = `<div id="print-header-full" style="display:none;"><img src="https://i.postimg.cc/jSt9gWck/1000054629.png"><div><h1>Kamdhenu Gaushala</h1><p>BSCKS - Official Animal Record</p></div></div>`;
         
         if(r.category === 'Doctor') {
-            card.innerHTML = `<h2>Dr. ${r.doc_name}</h2><p><b>Date:</b> ${r.visit_date}</p><p><b>Fee Paid:</b> ₹${r.fee || 0}</p><p><b>Purpose:</b> ${r.visit_purpose}</p><p><b>Notes:</b> ${r.notes || '-'}</p>`;
+            card.innerHTML = headerHtml + `<h2>Doctor Visit Details</h2><hr><p><b>Doctor:</b> ${r.doc_name}</p><p><b>Date:</b> ${r.visit_date}</p><p><b>Fee:</b> ₹${r.fee || 0}</p><p><b>Purpose:</b> ${r.visit_purpose}</p><p><b>Notes:</b> ${r.notes || '-'}</p>`;
         } else {
-            card.innerHTML = `${img}<h2>${r.name}</h2><p><b>Tag:</b> ${r.tag || 'N/A'}</p><p><b>Age:</b> ${calculateAge(r.dob)} (${r.dob || 'Unknown'})</p><p><b>Breed:</b> ${r.breed || 'N/A'}</p><p><b>Notes:</b> ${r.notes || '-'}</p>`;
+            const img = r.photo ? `<img src="${r.photo}" style="width:100%; border-radius:10px; margin-bottom:15px; border:1px solid #ddd;">` : '';
+            card.innerHTML = headerHtml + img + `<h2>${r.name} (${r.category})</h2><hr><table style="width:100%">
+                <tr><td><b>Tag ID:</b></td><td>${r.tag || 'N/A'}</td></tr>
+                <tr><td><b>Age:</b></td><td>${calculateAge(r.dob)}</td></tr>
+                <tr><td><b>Breed:</b></td><td>${r.breed || 'N/A'}</td></tr>
+                <tr><td><b>DOB:</b></td><td>${r.dob || 'N/A'}</td></tr>
+            </table><p style="margin-top:15px;"><b>Notes/History:</b><br>${r.notes || '-'}</p>`;
         }
         document.getElementById('delete-btn').onclick = () => deleteRecord(id);
         document.getElementById('edit-btn').onclick = () => editRecord(id);
@@ -280,6 +304,7 @@
         document.getElementById('animal-fields').classList.toggle('hidden', isDoc);
         document.getElementById('photo-section').classList.toggle('hidden', isDoc);
         document.getElementById('doctor-fields').classList.toggle('hidden', !isDoc);
+        document.getElementById('name').required = !isDoc;
         showView('view-form');
     }
 
@@ -289,14 +314,14 @@
         document.getElementById('edit-id').value = id;
         document.getElementById('notes').value = r.notes || "";
         if(r.category === 'Doctor') {
-            document.getElementById('doc_name').value = r.doc_name;
-            document.getElementById('visit_purpose').value = r.visit_purpose;
-            document.getElementById('visit_date').value = r.visit_date;
+            document.getElementById('doc_name').value = r.doc_name || "";
+            document.getElementById('visit_purpose').value = r.visit_purpose || "";
+            document.getElementById('visit_date').value = r.visit_date || "";
             document.getElementById('fee').value = r.fee || "";
         } else {
-            document.getElementById('name').value = r.name;
-            document.getElementById('tag').value = r.tag;
-            document.getElementById('breed').value = r.breed;
+            document.getElementById('name').value = r.name || "";
+            document.getElementById('tag').value = r.tag || "";
+            document.getElementById('breed').value = r.breed || "";
             document.getElementById('dob').value = r.dob || "";
             if(r.photo) {
                 document.getElementById('photo-data').value = r.photo;
@@ -316,47 +341,7 @@
                 const max = 400; const scale = max / Math.max(img.width, img.height);
                 canvas.width = img.width * scale; canvas.height = img.height * scale;
                 canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-                const b64 = canvas.toDataURL('image/jpeg', 0.6);
-                document.getElementById('photo-data').value = b64;
-                document.getElementById('preview-img').src = b64;
+                document.getElementById('photo-data').value = canvas.toDataURL('image/jpeg', 0.6);
+                document.getElementById('preview-img').src = document.getElementById('photo-data').value;
                 document.getElementById('preview-img').classList.remove('hidden');
-                document.getElementById('photo-prompt').classList.add('hidden');
-            };
-            img.src = event.target.result;
-        };
-        reader.readAsDataURL(e.target.files[0]);
-    }
-
-    document.getElementById('mainForm').onsubmit = async (e) => {
-        e.preventDefault();
-        if(!isAdmin) return alert("Login as Admin");
-        const id = document.getElementById('edit-id').value;
-        const data = { category: currentCat, notes: document.getElementById('notes').value };
-        if(currentCat === 'Doctor') {
-            data.doc_name = document.getElementById('doc_name').value;
-            data.visit_purpose = document.getElementById('visit_purpose').value;
-            data.visit_date = document.getElementById('visit_date').value;
-            data.fee = document.getElementById('fee').value;
-        } else {
-            data.name = document.getElementById('name').value;
-            data.tag = document.getElementById('tag').value;
-            data.breed = document.getElementById('breed').value;
-            data.dob = document.getElementById('dob').value;
-            data.photo = document.getElementById('photo-data').value;
-        }
-        id ? await recordsRef.child(id).update(data) : await recordsRef.push(data);
-        showList(currentCat);
-    };
-
-    async function deleteRecord(id) {
-        if(!isAdmin) return;
-        if(confirm("Delete Permanently?")) { await recordsRef.child(id).remove(); showList(currentCat); }
-    }
-
-    function exportData() {
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(allRecords));
-        const a = document.createElement('a'); a.setAttribute("href", dataStr); a.setAttribute("download", "backup.json"); a.click();
-    }
-</script>
-</body>
-</html>
+                document.getElement
