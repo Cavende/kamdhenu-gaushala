@@ -1,520 +1,95 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Kamdhenu Gaushala Cloud</title>
-
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kamdhenu Goshala</title>
     <style>
-        :root {
-            --primary: #ef6c00;
-            --accent: #2e7d32;
-            --bg: #f4f7f6;
-            --card-bg: #ffffff;
-            --text: #212121;
-            --danger: #d32f2f;
-            --edit: #1976d2;
-        }
-
-        body {
-            font-family: -apple-system, system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+        * {
             margin: 0;
-            background: var(--bg);
-            color: var(--text);
+            padding: 0;
+            box-sizing: border-box;
         }
-
+        
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+        }
+        
         header {
-            background: var(--primary);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 1rem;
-            display: flex;
-            align-items: center;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-        .header-logo {
-            height: 100px;
-            width: 100px;
-            border-radius: 50%;
-            border: 3px solid white;
-            background: white;
-            object-fit: cover;
-            flex-shrink: 0;
-        }
-        .header-text {
+            padding: 40px 20px;
             text-align: center;
-            flex-grow: 1;
-            margin-right: 100px;
         }
-        header h1 { margin: 0; font-size: 1.4rem; line-height: 1.2; }
-        header .subtitle { font-size: 0.8rem; opacity: 0.95; display: block; font-style: italic; margin-top: 4px; }
-
-        .container { padding: 15px; max-width: 900px; margin: auto; padding-bottom: 60px; }
-
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px; }
-
-        .cat-card { background: var(--card-bg); padding: 20px; border-radius: 15px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); cursor: pointer; border: 1px solid #ddd; position: relative; }
-        .cat-card span { font-size: 2rem; display: block; margin-bottom: 5px; }
-        .count-badge { position: absolute; top: 8px; right: 8px; background: var(--text); color: white; border-radius: 50%; width: 22px; height: 22px; font-size: 0.75rem; line-height: 22px; font-weight: bold; text-align: center; }
-
-        label { display: block; margin-top: 10px; font-weight: bold; font-size: 0.9rem; color: #555; }
-        input, textarea, select { width: 100%; padding: 12px; margin: 5px 0 12px 0; border: 1px solid #bbb; border-radius: 8px; box-sizing: border-box; font-size: 16px; background: white; }
-        .btn { background: var(--primary); color: white; border: none; padding: 14px; border-radius: 8px; cursor: pointer; width: 100%; font-size: 1rem; font-weight: bold; margin-top: 10px; display: block; text-align: center; }
-        .btn-outline { background: transparent; color: var(--primary); border: 2px solid var(--primary); }
-        .hidden { display: none !important; }
-        .admin-only { display: none; }
-
-        .report-box { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 1rem; }
-        th { background: #f8f9fa; color: #555; text-transform: uppercase; font-size: 0.8rem; padding: 12px; border-bottom: 2px solid #eee; text-align: left; }
-        td { padding: 12px; border-bottom: 1px solid #eee; color: #333; }
-
-        .animal-card { background: var(--card-bg); padding: 10px; margin-bottom: 10px; border-radius: 12px; display: flex; align-items: center; border: 1px solid #eee; cursor: pointer; }
-        .circle-preview { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; margin-right: 15px; background: #eee; border: 1px solid #ddd; }
-        .card-info { flex-grow: 1; }
-
-        #photo-section div { width:100%; height:180px; background:#eee; border-radius:12px; display:flex; align-items:center; justify-content:center; overflow:hidden; border:2px dashed #666; margin-bottom:12px; cursor:pointer; }
-        #photo-section img { width:100%; height:100%; object-fit:cover; display:block; }
-        .link-badge { display: inline-block; background: #e8f5e9; color: var(--accent); padding: 5px 10px; border-radius: 20px; font-size: 0.85rem; font-weight: bold; margin: 5px 5px 0 0; border: 1px solid #c8e6c9; cursor: pointer; }
-
-        /* Note: No custom print footer or page number elements are present.
-           Browser-added headers/footers (file path / page numbers) are controlled
-           by the user's print dialog and cannot be suppressed reliably from CSS/HTML. */
-
-        /* PRINT FIXES: keep header/logo visible and avoid clipping of totals */
-        @media print {
-          /* Make header print normally (sticky headers are often ignored or cause layout issues) */
-          header {
-            position: static !important;
-            top: auto !important;
-            box-shadow: none !important;
-            background: var(--primary) !important;
-            color: white !important;
-          }
-
-          /* Ensure the logo image prints and colors are preserved */
-          .header-logo {
-            display: block !important;
-            width: 80px !important;
-            height: 80px !important;
-            object-fit: cover !important;
-            border-radius: 50% !important;
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-          }
-
-          /* Make printed page use full width and remove decorative shadows that may clip */
-          .container {
-            max-width: 100% !important;
-            margin: 0 !important;
-            padding: 8mm !important;
-          }
-          .report-box { box-shadow: none !important; background: #fff !important; }
-
-          /* Hide UI controls that are irrelevant in print */
-          .btn, #login-trigger, #logout-trigger, .cat-card, .grid, .admin-only {
-            display: none !important;
-          }
-
-          /* Prevent the grand total from wrapping/truncating */
-          #grand-total-fees {
-            white-space: nowrap !important;
-            display: inline-block !important;
-            min-width: 6ch;
-            font-weight: bold;
-          }
-
-          /* Avoid breaking rows across pages */
-          #fee-body table, #summary-body table {
-            width: 100%;
-            border-collapse: collapse;
-          }
-          #fee-body tr, #summary-body tr {
-            page-break-inside: avoid;
-          }
-
-          /* Make sure body colors/images print where supported */
-          body {
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-          }
+        
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            font-size: 1.1em;
+            margin-bottom: 10px;
+            line-height: 1.6;
+        }
+        
+        .registration {
+            font-size: 0.95em;
+            margin-top: 15px;
+            opacity: 0.95;
+        }
+        
+        main {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+        
+        section {
+            background: white;
+            padding: 30px;
+            margin-bottom: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+        
+        footer {
+            background-color: #333;
+            color: white;
+            text-align: center;
+            padding: 20px;
+            margin-top: 40px;
         }
     </style>
 </head>
 <body>
-
-<header>
-    <img src="https://i.postimg.cc/jSt9gWck/1000054629.png" class="header-logo" alt="logo">
-    <div class="header-text">
-        <h1>Kamdhenu Gaushala</h1>
-        <span class="subtitle">Bramhachari Someshwar Chaytanya Kalyankari Sanstha (BSCKS)</span>
-    </div>
-</header>
-
-<div class="container">
-    <div id="view-categories">
-        <h3>Dashboard</h3>
-        <div class="grid">
-            <div class="cat-card" onclick="showList('Cow')"><div class="count-badge" id="badge-Cow">..</div><span>🐮</span><label>Cow</label></div>
-            <div class="cat-card" onclick="showList('Bull')"><div class="count-badge" id="badge-Bull">..</div><span>🐂</span><label>Bull</label></div>
-            <div class="cat-card" onclick="showList('Buffalo')"><div class="count-badge" id="badge-Buffalo">..</div><span>🐃</span><label>Buffalo</label></div>
-            <div class="cat-card" onclick="showList('Calf')"><div class="count-badge" id="badge-Calf">..</div><span>🐄</span><label>Calf</label></div>
-            <div class="cat-card" onclick="showList('Other')"><div class="count-badge" id="badge-Other">..</div><span>🐑</span><label>Other</label></div>
-            <div class="cat-card" onclick="showList('Doctor')"><div class="count-badge" id="badge-Doctor">..</div><span>👨‍⚕️</span><label>Doctor</label></div>
+    <header>
+        <h1>Kamdhenu Goshala</h1>
+        <div class="subtitle">
+            <p>Bramachari Ashram, Kamdhenu Goshala</p>
+            <p>A sanctuary dedicated to cow protection and care</p>
         </div>
-        <div style="margin-top:25px;">
-            <button class="btn" style="background:var(--accent)" onclick="showSummary()">📊 View Inventory Report</button>
-            <button class="btn btn-outline" onclick="exportData()">📥 Backup All Data</button>
-            <button id="login-trigger" class="btn btn-outline" style="margin-top:20px; color:#555; border-color:#555;" onclick="promptLogin()">🔒 Admin Login</button>
-            <button id="logout-trigger" class="btn btn-outline hidden" style="border-color:var(--danger); color:var(--danger); margin-top:20px;" onclick="logout()">🔓 Logout Admin</button>
+        <div class="registration">
+            <p>Maharashtra Go Seva Aayag</p>
+            <p>Under Register No. = MHGA/0178/NS</p>
         </div>
-    </div>
-
-    <div id="view-summary" class="hidden">
-        <button class="btn" style="width:auto; background:#555; margin-bottom:15px;" onclick="showView('view-categories')">← Home</button>
-        <div class="report-box">
-            <h2 style="text-align:left; margin-bottom: 8px;">Headcount Report</h2>
-            <div id="summary-body"></div>
-            <p style="text-align:center; font-weight:bold; font-size:1.2rem; border-top:2px solid #eee; padding-top:10px;">Total Animals: <span id="total-count">0</span></p>
-        </div>
-        <!-- No print buttons / custom footer here -->
-    </div>
-
-    <div id="view-fees" class="hidden">
-        <button class="btn" style="width:auto; background:#555; margin-bottom:15px;" onclick="showView('view-list')">← Back</button>
-        <div class="report-box">
-            <h2 style="text-align:center;">💰 Fee History</h2>
-            <div id="fee-body"></div>
-
-            <!-- Visible, clickable Print button (opens print dialog) and Grand Total on the page -->
-            <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; margin-top:12px;">
-              <button id="print-btn" class="btn btn-outline" style="width:auto; border-color:#555; color:#555;" onclick="window.print()">🖨️ Print</button>
-              <div style="margin-left:auto; font-weight:bold; font-size:1.1rem;">Grand Total: <span id="grand-total-fees">₹ 0</span></div>
-            </div>
-        </div>
-        <!-- No print buttons / custom footer here -->
-    </div>
-
-    <div id="view-list" class="hidden">
-        <button class="btn" style="width:auto; background:#555;" onclick="showView('view-categories')">← Home</button>
-        <h2 id="list-title">Records</h2>
-        <button id="fee-history-btn" class="btn btn-outline hidden" style="margin-bottom:15px; border-color:var(--accent); color:var(--accent);" onclick="showFeeHistory()">💰 View Fee History</button>
-        <div id="items-container"></div>
-        <button class="btn admin-only" style="background:var(--accent)" onclick="openForm()">+ Add New Entry</button>
-    </div>
-
-    <div id="view-form" class="hidden">
-        <button class="btn" style="width:auto; background:#555;" onclick="showView('view-list')">← Cancel</button>
-        <h2 id="form-header">Entry Form</h2>
-        <form id="mainForm">
-            <input type="hidden" id="edit-id">
-            <input type="hidden" id="photo-data">
-            <div id="photo-section">
-                <div onclick="document.getElementById('fileInput').click()">
-                    <span id="photo-prompt">📷 Add Photo</span>
-                    <img id="preview-img" class="hidden" style="width:100%; height:100%; object-fit:cover;">
-                </div>
-                <input type="file" id="fileInput" class="hidden" accept="image/*" onchange="processPhoto(event)">
-            </div>
-
-            <div id="animal-fields">
-                <input type="text" id="name" placeholder="Animal Name" required>
-                <input type="text" id="tag" placeholder="Tag / ID Number">
-                <div id="calf-only" class="hidden">
-                    <label>Select Mother</label>
-                    <select id="mother_id"><option value="">-- No Mother Linked --</option></select>
-                </div>
-                <input type="text" id="breed" placeholder="Breed">
-                <label>Date of Birth</label>
-                <input type="date" id="dob">
-            </div>
-
-            <div id="doctor-fields" class="hidden">
-                <input type="text" id="doc_name" placeholder="Doctor Name">
-                <input type="text" id="visit_purpose" placeholder="Purpose">
-                <label>Visit Date</label>
-                <input type="date" id="visit_date">
-                <label>Visit Fee (₹)</label>
-                <input type="number" id="fee" placeholder="0">
-            </div>
-
-            <textarea id="notes" placeholder="Notes..." rows="3"></textarea>
-            <button type="submit" class="btn">💾 Save to Cloud</button>
-        </form>
-    </div>
-
-    <div id="view-details" class="hidden">
-        <button class="btn" id="detail-back-btn" style="width:auto; background:#555;" onclick="showView('view-list')">← Back</button>
-        <div id="detail-card" class="report-box" style="margin-top:10px;"></div>
-        <div class="grid admin-only">
-            <button class="btn" style="background:var(--edit)" id="edit-btn">✏️ Edit</button>
-            <button class="btn" style="background:var(--danger)" id="delete-btn">🗑️ Delete</button>
-        </div>
-    </div>
-</div>
-
-<script>
-    const firebaseConfig = {
-        apiKey: "AIzaSyDKWiiRjST-dL6tQM6GE8QrnDb-_pKPdRw",
-        authDomain: "gaushala-app-d9444.firebaseapp.com",
-        databaseURL: "https://gaushala-app-d9444-default-rtdb.firebaseio.com",
-        projectId: "gaushala-app-d9444",
-        appId: "1:537528144436:web:ff881f7bb0a65f9466b061"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database().ref('records');
-
-    let isAdmin = false, allRecords = {}, currentCat = "";
-
-    window.onload = () => { if(localStorage.getItem('gaushalaAdmin') === 'true') setAdmin(true); };
-
-    function promptLogin() { if(prompt("Admin Password:") === "1234") { setAdmin(true); localStorage.setItem('gaushalaAdmin', 'true'); } }
-    function setAdmin(s) {
-        isAdmin = s;
-        document.querySelectorAll('.admin-only').forEach(el => el.style.display = s ? 'block' : 'none');
-        document.getElementById('login-trigger').classList.toggle('hidden', s);
-        document.getElementById('logout-trigger').classList.toggle('hidden', !s);
-    }
-    function logout() { localStorage.removeItem('gaushalaAdmin'); location.reload(); }
-
-    db.on('value', (snap) => {
-        allRecords = snap.val() || {};
-        ['Cow', 'Bull', 'Buffalo', 'Calf', 'Other', 'Doctor'].forEach(c => {
-            const count = Object.values(allRecords).filter(r => r.category === c).length;
-            if(document.getElementById(`badge-${c}`)) document.getElementById(`badge-${c}`).innerText = count;
-        });
-        if(!document.getElementById('view-list').classList.contains('hidden')) renderList();
-    });
-
-    function showView(id) { document.querySelectorAll('.container > div').forEach(d => d.classList.add('hidden')); document.getElementById(id).classList.remove('hidden'); }
-
-    function calculateAge(dob) {
-        if(!dob) return "N/A";
-        const b = new Date(dob); const t = new Date();
-        let y = t.getFullYear() - b.getFullYear();
-        let m = t.getMonth() - b.getMonth();
-        if (m < 0 || (m === 0 && t.getDate() < b.getDate())) { y--; m += 12; }
-        return `${y}Y ${m}M`;
-    }
-
-    function showSummary() {
-        let html = "<table><thead><tr><th>Category</th><th style='width:120px;text-align:right;'>Count</th></tr></thead><tbody>";
-        let total = 0;
-        ['Cow', 'Bull', 'Buffalo', 'Calf', 'Other'].forEach(c => {
-            const count = Object.values(allRecords).filter(r => r.category === c).length;
-            total += count;
-            html += `<tr><td style="padding-left:8px;">${c}s</td><td style="text-align:right;">${count}</td></tr>`;
-        });
-        html += `</tbody><tfoot><tr class="total-row"><td style="padding-left:8px;">TOTAL</td><td style="text-align:right;">${total}</td></tr></tfoot></table>`;
-        document.getElementById('summary-body').innerHTML = html;
-        document.getElementById('total-count').innerText = total;
-        showView('view-summary');
-    }
-
-    function showFeeHistory() {
-        let html = "<table><thead><tr><th>Date</th><th>Dr. & Purpose</th><th style='width:120px;text-align:right;'>Fee</th></tr></thead><tbody>";
-        let total = 0;
-
-        // gather doctor entries, sort by date desc
-        const rows = Object.values(allRecords)
-          .filter(r => r.category === 'Doctor')
-          .sort((a,b) => new Date(b.visit_date || 0) - new Date(a.visit_date || 0));
-
-        rows.forEach(r => {
-            const f = Number(r.fee) || 0;
-            total += f;
-            const feeText = "₹" + f.toLocaleString('en-IN');
-            html += `<tr><td>${escapeHtml(r.visit_date || '-')}</td>` +
-                    `<td><b>${escapeHtml(r.doc_name || '')}</b><br><small>${escapeHtml(r.visit_purpose || '')}</small></td>` +
-                    `<td style="text-align:right;">${feeText}</td></tr>`;
-        });
-
-        html += "</tbody></table>";
-        document.getElementById('fee-body').innerHTML = html;
-        // Format grand total using Indian style grouping and ensure it won't wrap
-        document.getElementById('grand-total-fees').innerText = "₹ " + total.toLocaleString('en-IN');
-        showView('view-fees');
-    }
-
-    function showList(cat) {
-        currentCat = cat;
-        document.getElementById('list-title').innerText = cat + " Records";
-        document.getElementById('fee-history-btn').classList.toggle('hidden', cat !== 'Doctor');
-        renderList();
-        showView('view-list');
-    }
-
-    function renderList() {
-        const container = document.getElementById('items-container'); container.innerHTML = '';
-        Object.entries(allRecords).filter(([id, r]) => r.category === currentCat).forEach(([id, r]) => {
-            const div = document.createElement('div'); div.className = 'animal-card';
-            div.onclick = () => showDetails(id);
-            let prev = '';
-            if (r.photo) {
-                prev = `<img src="${r.photo}" class="circle-preview" alt="">`;
-            } else {
-                prev = `<div class="circle-preview" style="display:flex;align-items:center;justify-content:center;font-size:20px;background:#f0f0f0;">${escapeHtml((r.name || r.doc_name || '').charAt(0) || '?')}</div>`;
-            }
-            const title = escapeHtml(r.name || r.doc_name || 'Unnamed');
-            const sub = escapeHtml(r.tag || r.visit_date || '');
-            div.innerHTML = `${prev}<div class="card-info"><b>${title}</b><br><small>${sub}</small></div><span>❯</span>`;
-            container.appendChild(div);
-        });
-        if (Object.values(allRecords).filter(r => r.category === currentCat).length === 0) {
-            container.innerHTML = "<p style='text-align:center; color:#666;'>No records found.</p>";
-        }
-    }
-
-    function showDetails(id) {
-        const r = allRecords[id]; if(!r) return;
-        const card = document.getElementById('detail-card');
-        let imgTag = r.photo ? `<img src="${r.photo}" style="width:100%; border-radius:12px; margin-bottom:15px;" alt="">` : "";
-        let extra = "";
-        if(r.category === 'Calf' && r.mother_id) {
-            const m = allRecords[r.mother_id];
-            if(m) extra += `<div class="link-badge" onclick="showDetails('${r.mother_id}')">Mother: ${escapeHtml(m.name || 'Unknown')}</div>`;
-        }
-        if(r.category === 'Cow' || r.category === 'Buffalo') {
-            const babs = Object.entries(allRecords).filter(([bid, b]) => b.mother_id === id);
-            if(babs.length > 0) extra += `<div style="margin-top:10px;"><b>Babies:</b><br>` + babs.map(([bid, b]) => `<span class="link-badge" onclick="showDetails('${bid}')">${escapeHtml(b.name || 'Unnamed')}</span>`).join(' ') + `</div>`;
-        }
-        if(r.category === 'Doctor') {
-            card.innerHTML = `<h2>Dr. ${escapeHtml(r.doc_name || '')}</h2><p><b>Date:</b> ${escapeHtml(r.visit_date || '-')}</p><p><b>Fee:</b> ₹${escapeHtml(r.fee || '0')}</p><p>${escapeHtml(r.visit_purpose || '')}</p><p>${escapeHtml(r.notes || '')}</p>`;
-        } else {
-            card.innerHTML = imgTag + `<h2>${escapeHtml(r.name || '')}</h2><p><b>Age:</b> ${calculateAge(r.dob)}</p><p><b>Tag:</b> ${escapeHtml(r.tag || 'N/A')}</p><p><b>Breed:</b> ${escapeHtml(r.breed || '')}</p><p>${escapeHtml(r.notes || '')}</p>` + extra;
-        }
-        document.getElementById('delete-btn').onclick = () => { if(confirm("Delete?")) { db.child(id).remove(); showList(currentCat); } };
-        document.getElementById('edit-btn').onclick = () => editRecord(id);
-        document.getElementById('detail-back-btn').onclick = () => showList(r.category);
-        showView('view-details');
-    }
-
-    function processPhoto(e) {
-        const file = e.target.files && e.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = () => {
-            document.getElementById('photo-data').value = reader.result;
-            const img = document.getElementById('preview-img');
-            img.src = reader.result;
-            img.classList.remove('hidden');
-            document.getElementById('photo-prompt').classList.add('hidden');
-        };
-        reader.readAsDataURL(file);
-    }
-
-    function openForm() {
-        document.getElementById('mainForm').reset();
-        document.getElementById('edit-id').value = "";
-        document.getElementById('photo-data').value = "";
-        document.getElementById('preview-img').classList.add('hidden');
-        document.getElementById('photo-prompt').classList.remove('hidden');
-
-        const isD = currentCat === 'Doctor';
-        const isC = currentCat === 'Calf';
-        document.getElementById('animal-fields').classList.toggle('hidden', isD);
-        document.getElementById('photo-section').classList.toggle('hidden', isD);
-        document.getElementById('doctor-fields').classList.toggle('hidden', !isD);
-        document.getElementById('calf-only').classList.toggle('hidden', !isC);
-
-        if(isC) {
-            const ms = document.getElementById('mother_id');
-            ms.innerHTML = '<option value="">-- No Mother Linked --</option>';
-            Object.entries(allRecords).forEach(([id, r]) => {
-                if(r.category === 'Cow' || r.category === 'Buffalo' || r.category === 'Other') {
-                    const opt = document.createElement('option');
-                    opt.value = id;
-                    opt.text = r.name || (r.tag ? `Tag: ${r.tag}` : 'Unnamed');
-                    ms.appendChild(opt);
-                }
-            });
-        }
-
-        showView('view-form');
-    }
-
-    function editRecord(id) {
-        const r = allRecords[id];
-        openForm();
-        document.getElementById('edit-id').value = id;
-        document.getElementById('notes').value = r.notes || "";
-        if(r.photo) {
-            document.getElementById('photo-data').value = r.photo;
-            document.getElementById('preview-img').src = r.photo;
-            document.getElementById('preview-img').classList.remove('hidden');
-            document.getElementById('photo-prompt').classList.add('hidden');
-        }
-        if(r.category === 'Doctor') {
-            document.getElementById('doc_name').value = r.doc_name || "";
-            document.getElementById('visit_purpose').value = r.visit_purpose || "";
-            document.getElementById('visit_date').value = r.visit_date || "";
-            document.getElementById('fee').value = r.fee || "";
-        } else {
-            document.getElementById('name').value = r.name || "";
-            document.getElementById('tag').value = r.tag || "";
-            document.getElementById('breed').value = r.breed || "";
-            document.getElementById('dob').value = r.dob || "";
-            if (r.mother_id) {
-                // ensure mother select exists and set value
-                const ms = document.getElementById('mother_id');
-                if (ms) {
-                    ms.value = r.mother_id;
-                }
-            }
-        }
-    }
-
-    document.getElementById('mainForm').onsubmit = async (e) => {
-        e.preventDefault(); if(!isAdmin) return alert("Login as Admin");
-        const id = document.getElementById('edit-id').value;
-        const data = { category: currentCat, notes: document.getElementById('notes').value, photo: document.getElementById('photo-data').value };
-        if(currentCat === 'Doctor') {
-            data.doc_name = document.getElementById('doc_name').value;
-            data.visit_purpose = document.getElementById('visit_purpose').value;
-            data.visit_date = document.getElementById('visit_date').value;
-            data.fee = document.getElementById('fee').value;
-        } else {
-            data.name = document.getElementById('name').value;
-            data.tag = document.getElementById('tag').value;
-            data.breed = document.getElementById('breed').value;
-            data.dob = document.getElementById('dob').value;
-            if(document.getElementById('mother_id')) data.mother_id = document.getElementById('mother_id').value || "";
-        }
-        try {
-            if(id) await db.child(id).update(data);
-            else await db.push(data);
-            showList(currentCat);
-        } catch(err) {
-            alert('Save failed: ' + (err.message || err));
-        }
-    };
-
-    function exportData() {
-        const ds = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(allRecords, null, 2));
-        const a = document.createElement('a');
-        a.setAttribute("href", ds);
-        a.setAttribute("download", "gaushala-backup-" + new Date().toISOString().slice(0,10) + ".json");
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-    }
-
-    function escapeHtml(unsafe) {
-        if(unsafe === undefined || unsafe === null) return '';
-        return String(unsafe)
-            .replaceAll('&','&amp;')
-            .replaceAll('<','&lt;')
-            .replaceAll('>','&gt;')
-            .replaceAll('"','&quot;')
-            .replaceAll("'", '&#039;');
-    }
-</script>
-
+    </header>
+    
+    <main>
+        <section>
+            <h2>Welcome to Kamdhenu Goshala</h2>
+            <p>We are dedicated to the protection and welfare of cows, following the principles of traditional care and modern veterinary practices.</p>
+        </section>
+    </main>
+    
+    <footer>
+        <p>&copy; 2025 Kamdhenu Goshala. All rights reserved.</p>
+    </footer>
 </body>
 </html>
