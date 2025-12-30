@@ -64,7 +64,7 @@
 
         label { display: block; margin-top: 10px; font-weight: bold; font-size: 0.9rem; color: #555; }
         input, textarea, select { width: 100%; padding: 12px; margin: 5px 0 12px 0; border: 1px solid #bbb; border-radius: 8px; box-sizing: border-box; font-size: 16px; background: white; }
-        .btn { background: var(--primary); color: white; border: none; padding: 14px; border-radius: 8px; cursor: pointer; width: 100%; font-size: 1rem; font-weight: bold; margin-top: 10px; display: block; }
+        .btn { background: var(--primary); color: white; border: none; padding: 14px; border-radius: 8px; cursor: pointer; width: 100%; font-size: 1rem; font-weight: bold; margin-top: 10px; display: block; text-align: center; }
         .btn-outline { background: transparent; color: var(--primary); border: 2px solid var(--primary); }
         .hidden { display: none !important; }
         .admin-only { display: none; }
@@ -79,12 +79,72 @@
         .circle-preview { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; margin-right: 15px; background: #eee; border: 1px solid #ddd; }
         .card-info { flex-grow: 1; }
 
-        #photo-section div { width:100%; height:180px; background:#eee; border-radius:12px; display:flex; align-items:center; justify-content:center; overflow:hidden; border:2px dashed #666; margin-bottom:12px; }
-        .link-badge { display: inline-block; background: #e8f5e9; color: var(--accent); padding: 5px 10px; border-radius: 20px; font-size: 0.85rem; font-weight: bold; margin: 5px 5px 0 0; border: 1px solid #c8e6c9; }
+        #photo-section div { width:100%; height:180px; background:#eee; border-radius:12px; display:flex; align-items:center; justify-content:center; overflow:hidden; border:2px dashed #666; margin-bottom:12px; cursor:pointer; }
+        #photo-section img { width:100%; height:100%; object-fit:cover; display:block; }
+        .link-badge { display: inline-block; background: #e8f5e9; color: var(--accent); padding: 5px 10px; border-radius: 20px; font-size: 0.85rem; font-weight: bold; margin: 5px 5px 0 0; border: 1px solid #c8e6c9; cursor: pointer; }
 
         /* Note: No custom print footer or page number elements are present.
            Browser-added headers/footers (file path / page numbers) are controlled
            by the user's print dialog and cannot be suppressed reliably from CSS/HTML. */
+
+        /* PRINT FIXES: keep header/logo visible and avoid clipping of totals */
+        @media print {
+          /* Make header print normally (sticky headers are often ignored or cause layout issues) */
+          header {
+            position: static !important;
+            top: auto !important;
+            box-shadow: none !important;
+            background: var(--primary) !important;
+            color: white !important;
+          }
+
+          /* Ensure the logo image prints and colors are preserved */
+          .header-logo {
+            display: block !important;
+            width: 80px !important;
+            height: 80px !important;
+            object-fit: cover !important;
+            border-radius: 50% !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+
+          /* Make printed page use full width and remove decorative shadows that may clip */
+          .container {
+            max-width: 100% !important;
+            margin: 0 !important;
+            padding: 8mm !important;
+          }
+          .report-box { box-shadow: none !important; background: #fff !important; }
+
+          /* Hide UI controls that are irrelevant in print */
+          .btn, #login-trigger, #logout-trigger, .cat-card, .grid, .admin-only {
+            display: none !important;
+          }
+
+          /* Prevent the grand total from wrapping/truncating */
+          #grand-total-fees {
+            white-space: nowrap !important;
+            display: inline-block !important;
+            min-width: 6ch;
+            font-weight: bold;
+          }
+
+          /* Avoid breaking rows across pages */
+          #fee-body table, #summary-body table {
+            width: 100%;
+            border-collapse: collapse;
+          }
+          #fee-body tr, #summary-body tr {
+            page-break-inside: avoid;
+          }
+
+          /* Make sure body colors/images print where supported */
+          body {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+        }
     </style>
 </head>
 <body>
@@ -131,7 +191,12 @@
         <div class="report-box">
             <h2 style="text-align:center;">💰 Fee History</h2>
             <div id="fee-body"></div>
-            <p style="text-align:right; font-weight:bold; font-size:1.2rem;">Grand Total: <span id="grand-total-fees">₹ 0</span></p>
+
+            <!-- Visible, clickable Print button (opens print dialog) and Grand Total on the page -->
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; margin-top:12px;">
+              <button id="print-btn" class="btn btn-outline" style="width:auto; border-color:#555; color:#555;" onclick="window.print()">🖨️ Print</button>
+              <div style="margin-left:auto; font-weight:bold; font-size:1.1rem;">Grand Total: <span id="grand-total-fees">₹ 0</span></div>
+            </div>
         </div>
         <!-- No print buttons / custom footer here -->
     </div>
@@ -210,7 +275,12 @@
     window.onload = () => { if(localStorage.getItem('gaushalaAdmin') === 'true') setAdmin(true); };
 
     function promptLogin() { if(prompt("Admin Password:") === "1234") { setAdmin(true); localStorage.setItem('gaushalaAdmin', 'true'); } }
-    function setAdmin(s) { isAdmin = s; document.querySelectorAll('.admin-only').forEach(el => el.style.display = s ? 'block' : 'none'); document.getElementById('login-trigger').classList.toggle('hidden', s); document.getElementById('logout-trigger').classList.toggle('hidden', !s); }
+    function setAdmin(s) {
+        isAdmin = s;
+        document.querySelectorAll('.admin-only').forEach(el => el.style.display = s ? 'block' : 'none');
+        document.getElementById('login-trigger').classList.toggle('hidden', s);
+        document.getElementById('logout-trigger').classList.toggle('hidden', !s);
+    }
     function logout() { localStorage.removeItem('gaushalaAdmin'); location.reload(); }
 
     db.on('value', (snap) => {
@@ -248,15 +318,27 @@
     }
 
     function showFeeHistory() {
-        let html = "<table><tr><th>Date</th><th>Dr. & Purpose</th><th style='width:120px;text-align:right;'>Fee</th></tr>";
+        let html = "<table><thead><tr><th>Date</th><th>Dr. & Purpose</th><th style='width:120px;text-align:right;'>Fee</th></tr></thead><tbody>";
         let total = 0;
-        Object.values(allRecords).filter(r => r.category === 'Doctor').sort((a,b) => new Date(b.visit_date) - new Date(a.visit_date)).forEach(r => {
-            const f = parseFloat(r.fee || 0); total += f;
-            html += `<tr><td>${r.visit_date || '-'}</td><td><b>${escapeHtml(r.doc_name || '')}</b><br><small>${escapeHtml(r.visit_purpose || '')}</small></td><td style="text-align:right;">₹${f}</td></tr>`;
+
+        // gather doctor entries, sort by date desc
+        const rows = Object.values(allRecords)
+          .filter(r => r.category === 'Doctor')
+          .sort((a,b) => new Date(b.visit_date || 0) - new Date(a.visit_date || 0));
+
+        rows.forEach(r => {
+            const f = Number(r.fee) || 0;
+            total += f;
+            const feeText = "₹" + f.toLocaleString('en-IN');
+            html += `<tr><td>${escapeHtml(r.visit_date || '-')}</td>` +
+                    `<td><b>${escapeHtml(r.doc_name || '')}</b><br><small>${escapeHtml(r.visit_purpose || '')}</small></td>` +
+                    `<td style="text-align:right;">${feeText}</td></tr>`;
         });
-        html += "</table>";
+
+        html += "</tbody></table>";
         document.getElementById('fee-body').innerHTML = html;
-        document.getElementById('grand-total-fees').innerText = "₹ " + total.toLocaleString();
+        // Format grand total using Indian style grouping and ensure it won't wrap
+        document.getElementById('grand-total-fees').innerText = "₹ " + total.toLocaleString('en-IN');
         showView('view-fees');
     }
 
@@ -273,12 +355,20 @@
         Object.entries(allRecords).filter(([id, r]) => r.category === currentCat).forEach(([id, r]) => {
             const div = document.createElement('div'); div.className = 'animal-card';
             div.onclick = () => showDetails(id);
-            let prev = r.photo ? `<img src="${r.photo}" class="circle-preview" alt="">` : `<div class="circle-preview" style="display:flex;align-items:center;justify-content:center;font-size:20px;background:#fafafa;color:#999;border:1px solid #eee;">?</div>`;
+            let prev = '';
+            if (r.photo) {
+                prev = `<img src="${r.photo}" class="circle-preview" alt="">`;
+            } else {
+                prev = `<div class="circle-preview" style="display:flex;align-items:center;justify-content:center;font-size:20px;background:#f0f0f0;">${escapeHtml((r.name || r.doc_name || '').charAt(0) || '?')}</div>`;
+            }
             const title = escapeHtml(r.name || r.doc_name || 'Unnamed');
             const sub = escapeHtml(r.tag || r.visit_date || '');
             div.innerHTML = `${prev}<div class="card-info"><b>${title}</b><br><small>${sub}</small></div><span>❯</span>`;
             container.appendChild(div);
         });
+        if (Object.values(allRecords).filter(r => r.category === currentCat).length === 0) {
+            container.innerHTML = "<p style='text-align:center; color:#666;'>No records found.</p>";
+        }
     }
 
     function showDetails(id) {
@@ -286,48 +376,144 @@
         const card = document.getElementById('detail-card');
         let imgTag = r.photo ? `<img src="${r.photo}" style="width:100%; border-radius:12px; margin-bottom:15px;" alt="">` : "";
         let extra = "";
-        if(r.category === 'Calf' && r.mother_id) { const m = allRecords[r.mother_id]; if(m) extra += `<div class="link-badge" onclick="showDetails('${r.mother_id}')">Mother: ${escapeHtml(m.name || 'Unnamed')}</div>`; }
+        if(r.category === 'Calf' && r.mother_id) {
+            const m = allRecords[r.mother_id];
+            if(m) extra += `<div class="link-badge" onclick="showDetails('${r.mother_id}')">Mother: ${escapeHtml(m.name || 'Unknown')}</div>`;
+        }
         if(r.category === 'Cow' || r.category === 'Buffalo') {
             const babs = Object.entries(allRecords).filter(([bid, b]) => b.mother_id === id);
             if(babs.length > 0) extra += `<div style="margin-top:10px;"><b>Babies:</b><br>` + babs.map(([bid, b]) => `<span class="link-badge" onclick="showDetails('${bid}')">${escapeHtml(b.name || 'Unnamed')}</span>`).join(' ') + `</div>`;
         }
-        if(r.category === 'Doctor') card.innerHTML = `<h2>Dr. ${escapeHtml(r.doc_name || '')}</h2><p><b>Date:</b> ${escapeHtml(r.visit_date || '-')}</p><p><b>Fee:</b> ₹${escapeHtml(r.fee || '0')}</p><p><b>Purpose:</b> ${escapeHtml(r.visit_purpose || '')}</p><p><b>Notes:</b> ${escapeHtml(r.notes || '')}</p>`;
-        else card.innerHTML = imgTag + `<h2>${escapeHtml(r.name || '')}</h2><p><b>Age:</b> ${calculateAge(r.dob)}</p><p><b>Tag:</b> ${escapeHtml(r.tag || 'N/A')}</p><p><b>Breed:</b> ${escapeHtml(r.breed || 'N/A')}</p>${extra}<p><b>Notes:</b> ${escapeHtml(r.notes || '')}</p>`;
-        document.getElementById('delete-btn').onclick = () => { if(confirm("Delete?")) db.child(id).remove(); showList(currentCat); };
+        if(r.category === 'Doctor') {
+            card.innerHTML = `<h2>Dr. ${escapeHtml(r.doc_name || '')}</h2><p><b>Date:</b> ${escapeHtml(r.visit_date || '-')}</p><p><b>Fee:</b> ₹${escapeHtml(r.fee || '0')}</p><p>${escapeHtml(r.visit_purpose || '')}</p><p>${escapeHtml(r.notes || '')}</p>`;
+        } else {
+            card.innerHTML = imgTag + `<h2>${escapeHtml(r.name || '')}</h2><p><b>Age:</b> ${calculateAge(r.dob)}</p><p><b>Tag:</b> ${escapeHtml(r.tag || 'N/A')}</p><p><b>Breed:</b> ${escapeHtml(r.breed || '')}</p><p>${escapeHtml(r.notes || '')}</p>` + extra;
+        }
+        document.getElementById('delete-btn').onclick = () => { if(confirm("Delete?")) { db.child(id).remove(); showList(currentCat); } };
         document.getElementById('edit-btn').onclick = () => editRecord(id);
         document.getElementById('detail-back-btn').onclick = () => showList(r.category);
         showView('view-details');
     }
 
-    function processPhoto(e) { const reader = new FileReader(); reader.onload = () => { document.getElementById('photo-data').value = reader.result; document.getElementById('preview-img').src = reader.result; document.getElementById('preview-img').classList.remove('hidden'); document.getElementById('photo-prompt').classList.add('hidden'); }; if(e.target.files && e.target.files[0]) reader.readAsDataURL(e.target.files[0]); }
+    function processPhoto(e) {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+            document.getElementById('photo-data').value = reader.result;
+            const img = document.getElementById('preview-img');
+            img.src = reader.result;
+            img.classList.remove('hidden');
+            document.getElementById('photo-prompt').classList.add('hidden');
+        };
+        reader.readAsDataURL(file);
+    }
 
     function openForm() {
-        document.getElementById('mainForm').reset(); document.getElementById('edit-id').value = ""; document.getElementById('photo-data').value = ""; document.getElementById('preview-img').classList.add('hidden'); document.getElementById('photo-prompt').classList.remove('hidden');
-        const isD = currentCat === 'Doctor'; const isC = currentCat === 'Calf';
-        document.getElementById('animal-fields').classList.toggle('hidden', isD); document.getElementById('photo-section').classList.toggle('hidden', isD); document.getElementById('doctor-fields').classList.toggle('hidden', !isD);
-        if(isC) { const ms = document.getElementById('mother_id'); ms.innerHTML = '<option value="">-- No Mother Linked --</option>'; Object.entries(allRecords).forEach(([id, r]) => { if(r.category === 'Cow' || r.category === 'Buffalo' || r.category === 'Other') ms.innerHTML += `<option value="${id}">${escapeHtml(r.name||('ID:' + id))}</option>`; }); }
+        document.getElementById('mainForm').reset();
+        document.getElementById('edit-id').value = "";
+        document.getElementById('photo-data').value = "";
+        document.getElementById('preview-img').classList.add('hidden');
+        document.getElementById('photo-prompt').classList.remove('hidden');
+
+        const isD = currentCat === 'Doctor';
+        const isC = currentCat === 'Calf';
+        document.getElementById('animal-fields').classList.toggle('hidden', isD);
+        document.getElementById('photo-section').classList.toggle('hidden', isD);
+        document.getElementById('doctor-fields').classList.toggle('hidden', !isD);
+        document.getElementById('calf-only').classList.toggle('hidden', !isC);
+
+        if(isC) {
+            const ms = document.getElementById('mother_id');
+            ms.innerHTML = '<option value="">-- No Mother Linked --</option>';
+            Object.entries(allRecords).forEach(([id, r]) => {
+                if(r.category === 'Cow' || r.category === 'Buffalo' || r.category === 'Other') {
+                    const opt = document.createElement('option');
+                    opt.value = id;
+                    opt.text = r.name || (r.tag ? `Tag: ${r.tag}` : 'Unnamed');
+                    ms.appendChild(opt);
+                }
+            });
+        }
+
         showView('view-form');
     }
 
     function editRecord(id) {
-        const r = allRecords[id]; openForm(); document.getElementById('edit-id').value = id; document.getElementById('notes').value = r.notes || "";
-        if(r.photo) { document.getElementById('photo-data').value = r.photo; document.getElementById('preview-img').src = r.photo; document.getElementById('preview-img').classList.remove('hidden'); document.getElementById('photo-prompt').classList.add('hidden'); }
-        if(r.category === 'Doctor') { document.getElementById('doc_name').value = r.doc_name || ""; document.getElementById('visit_purpose').value = r.visit_purpose || ""; document.getElementById('visit_date').value = r.visit_date || ""; document.getElementById('fee').value = r.fee || ""; }
-        else { document.getElementById('name').value = r.name || ""; document.getElementById('tag').value = r.tag || ""; document.getElementById('breed').value = r.breed || ""; document.getElementById('dob').value = r.dob || ""; if(document.getElementById('mother_id') && r.mother_id) document.getElementById('mother_id').value = r.mother_id; }
+        const r = allRecords[id];
+        openForm();
+        document.getElementById('edit-id').value = id;
+        document.getElementById('notes').value = r.notes || "";
+        if(r.photo) {
+            document.getElementById('photo-data').value = r.photo;
+            document.getElementById('preview-img').src = r.photo;
+            document.getElementById('preview-img').classList.remove('hidden');
+            document.getElementById('photo-prompt').classList.add('hidden');
+        }
+        if(r.category === 'Doctor') {
+            document.getElementById('doc_name').value = r.doc_name || "";
+            document.getElementById('visit_purpose').value = r.visit_purpose || "";
+            document.getElementById('visit_date').value = r.visit_date || "";
+            document.getElementById('fee').value = r.fee || "";
+        } else {
+            document.getElementById('name').value = r.name || "";
+            document.getElementById('tag').value = r.tag || "";
+            document.getElementById('breed').value = r.breed || "";
+            document.getElementById('dob').value = r.dob || "";
+            if (r.mother_id) {
+                // ensure mother select exists and set value
+                const ms = document.getElementById('mother_id');
+                if (ms) {
+                    ms.value = r.mother_id;
+                }
+            }
+        }
     }
 
     document.getElementById('mainForm').onsubmit = async (e) => {
         e.preventDefault(); if(!isAdmin) return alert("Login as Admin");
         const id = document.getElementById('edit-id').value;
         const data = { category: currentCat, notes: document.getElementById('notes').value, photo: document.getElementById('photo-data').value };
-        if(currentCat === 'Doctor') { data.doc_name = document.getElementById('doc_name').value; data.visit_purpose = document.getElementById('visit_purpose').value; data.visit_date = document.getElementById('visit_date').value; data.fee = document.getElementById('fee').value; }
-        else { data.name = document.getElementById('name').value; data.tag = document.getElementById('tag').value; data.breed = document.getElementById('breed').value; data.dob = document.getElementById('dob').value; if(document.getElementById('mother_id')) data.mother_id = document.getElementById('mother_id').value; }
-        try { if(id) await db.child(id).update(data); else await db.push(data); showList(currentCat); } catch(err) { alert('Save failed: ' + err.message); }
+        if(currentCat === 'Doctor') {
+            data.doc_name = document.getElementById('doc_name').value;
+            data.visit_purpose = document.getElementById('visit_purpose').value;
+            data.visit_date = document.getElementById('visit_date').value;
+            data.fee = document.getElementById('fee').value;
+        } else {
+            data.name = document.getElementById('name').value;
+            data.tag = document.getElementById('tag').value;
+            data.breed = document.getElementById('breed').value;
+            data.dob = document.getElementById('dob').value;
+            if(document.getElementById('mother_id')) data.mother_id = document.getElementById('mother_id').value || "";
+        }
+        try {
+            if(id) await db.child(id).update(data);
+            else await db.push(data);
+            showList(currentCat);
+        } catch(err) {
+            alert('Save failed: ' + (err.message || err));
+        }
     };
 
-    function exportData() { const ds = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(allRecords)); const a = document.createElement('a'); a.setAttribute("href", ds); a.setAttribute("download", "gaushala-backup-" + new Date().toISOString().slice(0,10) + ".json"); document.body.appendChild(a); a.click(); document.body.removeChild(a); }
+    function exportData() {
+        const ds = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(allRecords, null, 2));
+        const a = document.createElement('a');
+        a.setAttribute("href", ds);
+        a.setAttribute("download", "gaushala-backup-" + new Date().toISOString().slice(0,10) + ".json");
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    }
 
-    function escapeHtml(unsafe) { if(unsafe === undefined || unsafe === null) return ''; return String(unsafe).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#039;'); }
+    function escapeHtml(unsafe) {
+        if(unsafe === undefined || unsafe === null) return '';
+        return String(unsafe)
+            .replaceAll('&','&amp;')
+            .replaceAll('<','&lt;')
+            .replaceAll('>','&gt;')
+            .replaceAll('"','&quot;')
+            .replaceAll("'", '&#039;');
+    }
 </script>
 
 </body>
